@@ -1,0 +1,177 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+// Read helpers for the Consultant Workspace. All read-only, all via the
+// publishable-key server client. Reads honour node RLS (human_read policy).
+
+export type EngagementRow = {
+  id: string;
+  orgName: string;
+  name: string;
+  horizon: string | null;
+  keyQuestions: string[];
+  stageCurrent: string;
+};
+
+export type SignalRow = {
+  id: string;
+  label: string;
+  dimension: string | null;
+  createdAt: string;
+  source: {
+    kind: string;
+    uri: string | null;
+    reference: string | null;
+    publishedAt: string;
+    retrievedAt: string;
+    credibility: number;
+    excerpt: string;
+  } | null;
+};
+
+export type InsightRow = {
+  id: string;
+  label: string;
+  confidence: number | null;
+  citationCount: number;
+  createdAt: string;
+};
+
+export type NodeRow = {
+  id: string;
+  type: string;
+  label: string;
+  status: string;
+  origin: string;
+  staleSince: string | null;
+  dimension: string | null;
+  createdAt: string;
+};
+
+export async function getEngagement(db: SupabaseClient, id: string): Promise<EngagementRow> {
+  const { data, error } = await db
+    .from("engagement")
+    .select("id,org_name,name,horizon,key_questions,stage_current")
+    .eq("id", id)
+    .single();
+  if (error) throw new Error(`engagement: ${error.message}`);
+  const kq = (data as { key_questions: unknown }).key_questions;
+  return {
+    id: data.id,
+    orgName: data.org_name,
+    name: data.name,
+    horizon: data.horizon,
+    keyQuestions: Array.isArray(kq) ? (kq as string[]) : [],
+    stageCurrent: data.stage_current,
+  };
+}
+
+export async function countByType(db: SupabaseClient, engagementId: string): Promise<Record<string, number>> {
+  const { data, error } = await db.from("node").select("type").eq("engagement_id", engagementId);
+  if (error) throw new Error(error.message);
+  const counts: Record<string, number> = {};
+  for (const r of (data ?? []) as { type: string }[]) counts[r.type] = (counts[r.type] ?? 0) + 1;
+  return counts;
+}
+
+export async function listSignals(db: SupabaseClient, engagementId: string): Promise<SignalRow[]> {
+  const { data, error } = await db
+    .from("node")
+    .select(
+      "id,label,payload,created_at, signal_source(kind,uri,reference,published_at,retrieved_at,credibility,excerpt)",
+    )
+    .eq("engagement_id", engagementId)
+    .eq("type", "signal")
+    .order("created_at", { ascending: true });
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as Record<string, unknown>[]).map((r) => {
+    const src = (r.signal_source as Record<string, unknown>[] | null)?.[0];
+    const payload = (r.payload as { dimension?: string } | null) ?? {};
+    return {
+      id: r.id as string,
+      label: r.label as string,
+      dimension: payload.dimension ?? null,
+      createdAt: r.created_at as string,
+      source: src
+        ? {
+            kind: src.kind as string,
+            uri: (src.uri as string | null) ?? null,
+            reference: (src.reference as string | null) ?? null,
+            publishedAt: src.published_at as string,
+            retrievedAt: src.retrieved_at as string,
+            credibility: src.credibility as number,
+            excerpt: src.excerpt as string,
+          }
+        : null,
+    };
+  });
+}
+
+export async function listInsights(db: SupabaseClient, engagementId: string): Promise<InsightRow[]> {
+  const { data, error } = await db
+    .from("node")
+    .select("id,label,confidence,created_at")
+    .eq("engagement_id", engagementId)
+    .eq("type", "insight")
+    .order("created_at", { ascending: true });
+  if (error) throw new Error(error.message);
+  const insights = (data ?? []) as { id: string; label: string; confidence: number | null; created_at: string }[];
+
+  const counts: Record<string, number> = {};
+  if (insights.length > 0) {
+    const { data: edges, error: e2 } = await db
+      .from("edge")
+      .select("to_node")
+      .in("to_node", insights.map((i) => i.id))
+      .eq("type", "supports");
+    if (e2) throw new Error(e2.message);
+    for (const e of (edges ?? []) as { to_node: string }[]) counts[e.to_node] = (counts[e.to_node] ?? 0) + 1;
+  }
+
+  return insights.map((i) => ({
+    id: i.id,
+    label: i.label,
+    confidence: i.confidence,
+    citationCount: counts[i.id] ?? 0,
+    createdAt: i.created_at,
+  }));
+}
+
+export async function getNode(db: SupabaseClient, nodeId: string): Promise<NodeRow | null> {
+  const { data, error } = await db
+    .from("node")
+    .select("id,type,label,status,origin,stale_since,payload,created_at")
+    .eq("id", nodeId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) return null;
+  const payload = (data.payload as { dimension?: string } | null) ?? {};
+  return {
+    id: data.id,
+    type: data.type,
+    label: data.label,
+    status: data.status,
+    origin: data.origin,
+    staleSince: data.stale_since,
+    dimension: payload.dimension ?? null,
+    createdAt: data.created_at,
+  };
+}
+
+// Signals available to cite when capturing an insight (id + label only).
+export async function listSignalOptions(
+  db: SupabaseClient,
+  engagementId: string,
+): Promise<{ id: string; label: string; dimension: string | null }[]> {
+  const { data, error } = await db
+    .from("node")
+    .select("id,label,payload")
+    .eq("engagement_id", engagementId)
+    .eq("type", "signal")
+    .order("created_at", { ascending: true });
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as Record<string, unknown>[]).map((r) => ({
+    id: r.id as string,
+    label: r.label as string,
+    dimension: ((r.payload as { dimension?: string } | null) ?? {}).dimension ?? null,
+  }));
+}
