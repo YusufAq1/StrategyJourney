@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { CapabilityCell } from "./queries/types";
 
 // Read helpers for the Consultant Workspace. All read-only, all via the
 // publishable-key server client. Reads honour node RLS (human_read policy).
@@ -155,6 +156,75 @@ export async function getNode(db: SupabaseClient, nodeId: string): Promise<NodeR
     dimension: payload.dimension ?? null,
     createdAt: data.created_at,
   };
+}
+
+// Capability cells for an engagement — joins the capability table (level,
+// parent, criticality, required) with the capability_assessment view (current
+// maturity avg, spread). The single fetch behind the heatmap, the gaps list and
+// the inventory table, so all three agree. colourValue defaults to gap; the
+// heatmap query overrides it per colour_by.
+export async function listCapabilityCells(db: SupabaseClient, engagementId: string): Promise<CapabilityCell[]> {
+  const { data: capNodes, error: e0 } = await db
+    .from("node")
+    .select("id,label")
+    .eq("engagement_id", engagementId)
+    .eq("type", "capability");
+  if (e0) throw new Error(e0.message);
+  const nodes = (capNodes ?? []) as { id: string; label: string }[];
+  if (nodes.length === 0) return [];
+
+  const labelById: Record<string, string> = {};
+  const ids: string[] = [];
+  for (const n of nodes) {
+    labelById[n.id] = n.label;
+    ids.push(n.id);
+  }
+
+  const { data: caps, error: e1 } = await db
+    .from("capability")
+    .select("node_id,level,parent_id,criticality,maturity_required")
+    .in("node_id", ids);
+  if (e1) throw new Error(e1.message);
+
+  const { data: view, error: e2 } = await db
+    .from("capability_assessment")
+    .select("node_id,maturity_current,spread")
+    .in("node_id", ids);
+  if (e2) throw new Error(e2.message);
+
+  const vById: Record<string, { maturity_current: number | null; spread: number | null }> = {};
+  for (const v of (view ?? []) as { node_id: string; maturity_current: number | null; spread: number | null }[]) {
+    vById[v.node_id] = { maturity_current: v.maturity_current, spread: v.spread };
+  }
+
+  return ((caps ?? []) as {
+    node_id: string;
+    level: number;
+    parent_id: string | null;
+    criticality: number;
+    maturity_required: number;
+  }[]).map((c) => {
+    const v = vById[c.node_id];
+    const cur = v?.maturity_current != null ? Number(v.maturity_current) : 0;
+    const req = c.maturity_required;
+    const crit = c.criticality;
+    const gap = Math.max(req - cur, 0);
+    const spread = v?.spread != null ? Number(v.spread) : 0;
+    return {
+      nodeId: c.node_id,
+      label: labelById[c.node_id] ?? "(unnamed)",
+      parentLabel: c.parent_id ? labelById[c.parent_id] ?? null : null,
+      level: c.level,
+      criticality: crit,
+      maturityCurrent: cur,
+      maturityRequired: req,
+      gap,
+      gapWeighted: gap * crit,
+      spread,
+      contested: spread > 1.0,
+      colourValue: gap,
+    };
+  });
 }
 
 // Signals available to cite when capturing an insight (id + label only).

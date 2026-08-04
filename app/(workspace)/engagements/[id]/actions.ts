@@ -91,3 +91,71 @@ export async function createInsightAction(_prev: FormState, formData: FormData):
   revalidatePath(`/engagements/${parsed.data.engagementId}/insights`);
   redirect(`/engagements/${parsed.data.engagementId}/nodes/${data}`);
 }
+
+const scoreSchema = z.object({
+  engagementId: z.string().uuid(),
+  capabilityId: z.string().uuid(),
+  maturity: z.coerce.number().int().min(1).max(5),
+});
+
+// Consultant scoring — upsert the current-maturity score for the single
+// respondent. capability_score is keyed (capability, respondent, mode) so
+// Workshop Mode later is a new input path, not a migration.
+export async function updateMaturityAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const parsed = scoreSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid score." };
+
+  const db = createHumanClient();
+  const { error } = await db.from("capability_score").upsert(
+    {
+      capability_id: parsed.data.capabilityId,
+      respondent_id: CURRENT_USER_ID,
+      mode: "consultant",
+      maturity: parsed.data.maturity,
+    },
+    { onConflict: "capability_id,respondent_id,mode" },
+  );
+  if (error) return { error: error.message };
+
+  revalidatePath(`/engagements/${parsed.data.engagementId}/capabilities`);
+  return null;
+}
+
+// SWOT derivation (Sonnet 5). AI writes run as ai_service via derive_swot_apply
+// inside the derivation; this action just orchestrates and surfaces errors.
+export async function deriveSwotAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const engagementId = String(formData.get("engagementId") ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(engagementId)) return { error: "Missing engagement." };
+  try {
+    const { deriveSwot } = await import("@/lib/ai/derivations/swot");
+    const db = createHumanClient();
+    await deriveSwot(db, engagementId);
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+  revalidatePath(`/engagements/${engagementId}/swot`);
+  return null;
+}
+
+const deleteSwotSchema = z.object({
+  engagementId: z.string().uuid(),
+  nodeId: z.string().uuid(),
+  reason: z.string().trim().min(3, "A deletion reason is required — evidence is not discarded silently."),
+});
+
+// Deletion requires a recorded reason (CLAUDE.md §7 acceptance criterion; the DB
+// check constraint is the backstop).
+export async function deleteSwotItemAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const parsed = deleteSwotSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
+
+  const db = createHumanClient();
+  const { error } = await db
+    .from("swot_item")
+    .update({ deleted_at: new Date().toISOString(), deleted_by: CURRENT_USER_ID, deletion_reason: parsed.data.reason })
+    .eq("node_id", parsed.data.nodeId);
+  if (error) return { error: error.message };
+
+  revalidatePath(`/engagements/${parsed.data.engagementId}/swot`);
+  return null;
+}

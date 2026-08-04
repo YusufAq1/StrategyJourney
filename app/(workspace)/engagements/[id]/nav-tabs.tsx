@@ -10,6 +10,8 @@ export function NavTabs({ id }: { id: string }) {
     { href: base, label: "Overview", exact: true },
     { href: `${base}/signals`, label: "Signals", exact: false },
     { href: `${base}/insights`, label: "Insights", exact: false },
+    { href: `${base}/capabilities`, label: "Capabilities", exact: false },
+    { href: `${base}/swot`, label: "SWOT", exact: false },
   ];
   return (
     <nav className="mt-3 flex gap-1">
