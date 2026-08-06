@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createHumanClient } from "@/lib/db/human";
 import { CURRENT_USER_ID, DIMENSIONS, SOURCE_KINDS } from "@/lib/constants";
+import type { SignalProposal, InsightProposal } from "@/lib/ai/assist-types";
 
 // The API-layer enforcement (START-HERE Step 3): source + date are impossible to
 // skip here, mirroring the form and the DB trigger backstop.
@@ -305,5 +306,217 @@ export async function acceptFindingAction(_prev: FormState, formData: FormData):
   if (e2) return { error: e2.message };
 
   revalidatePath(`/engagements/${parsed.data.engagementId}/coherence`);
+  return null;
+}
+
+// ---------------------------------------------------------------------------
+// Deletes (permanent, with guards). The DB now permits deleting signal/insight/
+// capability nodes (migration 0006); these actions add the integrity checks the
+// database does not — nothing catches an orphaned insight or a restricted
+// capability parent on its own.
+// ---------------------------------------------------------------------------
+
+export async function deleteSignalAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const engagementId = String(formData.get("engagementId") ?? "");
+  const signalId = String(formData.get("nodeId") ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(engagementId) || !/^[0-9a-f-]{36}$/i.test(signalId)) return { error: "Missing ids." };
+
+  const db = createHumanClient();
+
+  // Guard: would deleting this signal leave any insight with zero evidence?
+  const { data: sup, error: e0 } = await db.from("edge").select("to_node").eq("from_node", signalId).eq("type", "supports");
+  if (e0) return { error: e0.message };
+  const insightIds = [...new Set(((sup ?? []) as { to_node: string }[]).map((e) => e.to_node))];
+  if (insightIds.length > 0) {
+    const { data: allSup, error: e1 } = await db.from("edge").select("to_node").in("to_node", insightIds).eq("type", "supports");
+    if (e1) return { error: e1.message };
+    const counts: Record<string, number> = {};
+    for (const e of (allSup ?? []) as { to_node: string }[]) counts[e.to_node] = (counts[e.to_node] ?? 0) + 1;
+    const soleFor = insightIds.filter((id) => (counts[id] ?? 0) <= 1);
+    if (soleFor.length > 0) {
+      const { data: labs } = await db.from("node").select("label").in("id", soleFor);
+      const names = ((labs ?? []) as { label: string }[]).map((l) => `“${l.label}”`).join("; ");
+      return {
+        error: `This signal is the only evidence for ${soleFor.length} insight${soleFor.length === 1 ? "" : "s"} (${names}). Edit or delete ${soleFor.length === 1 ? "it" : "them"} first.`,
+      };
+    }
+  }
+
+  const { error } = await db.from("node").delete().eq("id", signalId);
+  if (error) return { error: error.message };
+  revalidatePath(`/engagements/${engagementId}/signals`);
+  return null;
+}
+
+export async function deleteInsightAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const engagementId = String(formData.get("engagementId") ?? "");
+  const nodeId = String(formData.get("nodeId") ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(engagementId) || !/^[0-9a-f-]{36}$/i.test(nodeId)) return { error: "Missing ids." };
+  const db = createHumanClient();
+  const { error } = await db.from("node").delete().eq("id", nodeId);
+  if (error) return { error: error.message };
+  revalidatePath(`/engagements/${engagementId}/insights`);
+  return null;
+}
+
+export async function deleteCapabilityAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const engagementId = String(formData.get("engagementId") ?? "");
+  const nodeId = String(formData.get("nodeId") ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(engagementId) || !/^[0-9a-f-]{36}$/i.test(nodeId)) return { error: "Missing ids." };
+  const db = createHumanClient();
+
+  // capability.parent_id is RESTRICT: a level-1 domain with children can't be
+  // deleted until its children are gone. Delete the children first.
+  const { data: kids, error: e0 } = await db.from("capability").select("node_id").eq("parent_id", nodeId);
+  if (e0) return { error: e0.message };
+  const kidIds = ((kids ?? []) as { node_id: string }[]).map((k) => k.node_id);
+  if (kidIds.length > 0) {
+    const { error: ek } = await db.from("node").delete().in("id", kidIds);
+    if (ek) return { error: ek.message };
+  }
+
+  const { error } = await db.from("node").delete().eq("id", nodeId);
+  if (error) return { error: error.message };
+  revalidatePath(`/engagements/${engagementId}/capabilities`);
+  return null;
+}
+
+// ---------------------------------------------------------------------------
+// Manual add SWOT (human). Evidence is optional; unsupported items are flagged
+// in the UI. Writes via create_swot (origin='human').
+// ---------------------------------------------------------------------------
+const addSwotSchema = z.object({
+  engagementId: z.string().uuid(),
+  quadrant: z.enum(["strength", "weakness", "opportunity", "threat"]),
+  statement: z.string().trim().min(3, "Give the item a statement."),
+  rationale: z.string().trim().optional().default(""),
+});
+
+export async function addSwotAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const parsed = addSwotSchema.safeParse({
+    engagementId: formData.get("engagementId"),
+    quadrant: formData.get("quadrant"),
+    statement: formData.get("statement"),
+    rationale: formData.get("rationale"),
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Please check the form." };
+
+  const evidenceIds = formData
+    .getAll("evidenceIds")
+    .map((v) => String(v))
+    .filter((v) => /^[0-9a-f-]{36}$/i.test(v));
+
+  const db = createHumanClient();
+  const { error } = await db.rpc("create_swot", {
+    p_engagement_id: parsed.data.engagementId,
+    p_quadrant: parsed.data.quadrant,
+    p_statement: parsed.data.statement,
+    p_rationale: parsed.data.rationale,
+    p_evidence_ids: evidenceIds.length > 0 ? evidenceIds : null,
+    p_created_by: CURRENT_USER_ID,
+  });
+  if (error) return { error: error.message };
+  revalidatePath(`/engagements/${parsed.data.engagementId}/swot`);
+  return null;
+}
+
+// ---------------------------------------------------------------------------
+// AI assist — propose → review → accept. The AI only proposes (CLAUDE.md §14);
+// nothing is written until the human accepts, and then via the existing
+// create_signal / create_insight (origin='human'). Each propose call is logged
+// to ai_run; accepting marks that run accepted.
+// ---------------------------------------------------------------------------
+
+export type ProposeSignalsState =
+  | { error: string }
+  | { proposals: SignalProposal[]; runId: string | null }
+  | null;
+
+export async function proposeSignalsAction(_prev: ProposeSignalsState, formData: FormData): Promise<ProposeSignalsState> {
+  const engagementId = String(formData.get("engagementId") ?? "");
+  const text = String(formData.get("text") ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(engagementId)) return { error: "Missing engagement." };
+  try {
+    const { extractSignals } = await import("@/lib/ai/derivations/signal-extraction");
+    const { proposals, runId } = await extractSignals(createHumanClient(), engagementId, text);
+    return { proposals, runId };
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+}
+
+// Accepts one reviewed signal proposal (with the shared source the consultant
+// supplied). Reuses the same validation as the manual path; does NOT redirect,
+// so the reviewer stays open for the next proposal.
+export async function acceptProposedSignalAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const parsed = signalSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
+  const d = parsed.data;
+
+  const db = createHumanClient();
+  const { error } = await db.rpc("create_signal", {
+    p_engagement_id: d.engagementId,
+    p_label: d.label,
+    p_dimension: d.dimension,
+    p_kind: d.kind,
+    p_uri: d.uri || null,
+    p_reference: d.reference || null,
+    p_published_at: d.publishedAt,
+    p_retrieved_at: null,
+    p_credibility: d.credibility,
+    p_excerpt: d.excerpt,
+    p_created_by: CURRENT_USER_ID,
+  });
+  if (error) return { error: error.message };
+
+  const runId = String(formData.get("runId") ?? "");
+  if (/^[0-9a-f-]{36}$/i.test(runId)) await db.rpc("set_ai_run_accepted", { p_run_id: runId, p_accepted: true });
+
+  revalidatePath(`/engagements/${d.engagementId}/signals`);
+  return null;
+}
+
+export type ProposeInsightsState =
+  | { error: string }
+  | { proposals: InsightProposal[]; signalLabels: Record<string, string>; runId: string | null }
+  | null;
+
+export async function proposeInsightsAction(_prev: ProposeInsightsState, formData: FormData): Promise<ProposeInsightsState> {
+  const engagementId = String(formData.get("engagementId") ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(engagementId)) return { error: "Missing engagement." };
+  try {
+    const { suggestInsights } = await import("@/lib/ai/derivations/insight-suggestion");
+    const { proposals, signalLabels, runId } = await suggestInsights(createHumanClient(), engagementId);
+    return { proposals, signalLabels, runId };
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+}
+
+export async function acceptProposedInsightAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const parsed = insightSchema.safeParse({
+    engagementId: formData.get("engagementId"),
+    label: formData.get("label"),
+    confidence: formData.get("confidence") ? formData.get("confidence") : undefined,
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
+
+  const signalIds = formData.getAll("signalIds").map(String).filter((v) => /^[0-9a-f-]{36}$/i.test(v));
+  if (signalIds.length < 1) return { error: "An insight must cite at least one signal." };
+
+  const db = createHumanClient();
+  const { error } = await db.rpc("create_insight", {
+    p_engagement_id: parsed.data.engagementId,
+    p_label: parsed.data.label,
+    p_confidence: parsed.data.confidence ?? null,
+    p_signal_ids: signalIds,
+    p_created_by: CURRENT_USER_ID,
+  });
+  if (error) return { error: error.message };
+
+  const runId = String(formData.get("runId") ?? "");
+  if (/^[0-9a-f-]{36}$/i.test(runId)) await db.rpc("set_ai_run_accepted", { p_run_id: runId, p_accepted: true });
+
+  revalidatePath(`/engagements/${parsed.data.engagementId}/insights`);
   return null;
 }

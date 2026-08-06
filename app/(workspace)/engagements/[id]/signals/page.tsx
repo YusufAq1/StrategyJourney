@@ -3,6 +3,8 @@ import { createHumanClient } from "@/lib/db/human";
 import { listSignals } from "@/lib/graph/reads";
 import { dimensionLabel } from "@/lib/constants";
 import { SignalForm } from "./signal-form";
+import { AssistPanel } from "./assist-panel";
+import { DeleteNodeButton } from "../delete-node-button";
 
 function host(u: string): string {
   try {
@@ -28,11 +30,14 @@ export default async function SignalsPage({ params }: { params: Promise<{ id: st
                 <Link href={`/engagements/${id}/nodes/${s.id}`} className="text-sm font-medium text-[#13294B] hover:underline">
                   {s.label}
                 </Link>
-                {s.dimension && (
-                  <span className="shrink-0 rounded bg-neutral-100 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-neutral-500">
-                    {dimensionLabel(s.dimension)}
-                  </span>
-                )}
+                <div className="flex shrink-0 items-start gap-2">
+                  {s.dimension && (
+                    <span className="rounded bg-neutral-100 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-neutral-500">
+                      {dimensionLabel(s.dimension)}
+                    </span>
+                  )}
+                  <DeleteNodeButton kind="signal" engagementId={id} nodeId={s.id} confirmLabel="Delete signal?" />
+                </div>
               </div>
               {s.source && (
                 <div className="mt-2 text-xs text-neutral-500">
@@ -51,9 +56,10 @@ export default async function SignalsPage({ params }: { params: Promise<{ id: st
         </ul>
       </section>
 
-      <aside>
+      <aside className="space-y-4">
+        <AssistPanel engagementId={id} />
         <div className="sticky top-6 rounded-lg border border-neutral-200 bg-white p-5">
-          <h3 className="mb-3 text-sm font-semibold text-neutral-700">Add a signal</h3>
+          <h3 className="mb-3 text-sm font-semibold text-neutral-700">Add a signal manually</h3>
           <SignalForm engagementId={id} />
         </div>
       </aside>

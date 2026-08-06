@@ -4,7 +4,7 @@
   "private": true,
   "description": "Strategy Journey Platform — Consultant Workspace prototype",
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",

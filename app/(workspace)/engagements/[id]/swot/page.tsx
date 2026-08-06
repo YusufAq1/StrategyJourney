@@ -1,8 +1,10 @@
 import { createHumanClient } from "@/lib/db/human";
 import { resolveBinding } from "@/lib/graph/queries";
+import { listSignalOptions, listCapabilityCells } from "@/lib/graph/reads";
 import type { SwotView, SwotItem, SwotQuadrant } from "@/lib/graph/queries/types";
 import { DeriveButton } from "./derive-button";
 import { SwotItemCard } from "./swot-item-card";
+import { AddSwotForm } from "./add-swot-form";
 
 const QUADS: { key: SwotQuadrant; label: string; tone: string }[] = [
   { key: "strength", label: "Strengths", tone: "border-emerald-300" },
@@ -14,9 +16,18 @@ const QUADS: { key: SwotQuadrant; label: string; tone: string }[] = [
 export default async function SwotPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const db = createHumanClient();
-  const { vm } = await resolveBinding("swot.derived()", { engagementId: id, db });
+  const [{ vm }, signalOpts, capCells] = await Promise.all([
+    resolveBinding("swot.derived()", { engagementId: id, db }),
+    listSignalOptions(db, id),
+    listCapabilityCells(db, id),
+  ]);
   const view = vm as SwotView;
   const total = (Object.values(view.quadrants) as SwotItem[][]).reduce((n, arr) => n + arr.length, 0);
+
+  const evidence = [
+    ...signalOpts.map((s) => ({ id: s.id, label: s.label, kind: "signal" as const })),
+    ...capCells.filter((c) => c.level === 2).map((c) => ({ id: c.nodeId, label: c.label, kind: "capability" as const })),
+  ];
 
   return (
     <div className="space-y-6">
@@ -29,6 +40,10 @@ export default async function SwotPage({ params }: { params: Promise<{ id: strin
           </p>
         </div>
         <DeriveButton engagementId={id} hasItems={total > 0} />
+      </div>
+
+      <div>
+        <AddSwotForm engagementId={id} evidence={evidence} />
       </div>
 
       {total === 0 ? (

@@ -1,22 +1,22 @@
 import { createHumanClient } from "@/lib/db/human";
 import { listCapabilityCells } from "@/lib/graph/reads";
-import { resolveBinding } from "@/lib/graph/queries";
-import type { CapabilityHeatmap, CapabilityCell } from "@/lib/graph/queries/types";
+import { heatmapFromCells } from "@/lib/graph/queries/capabilities";
+import type { CapabilityCell } from "@/lib/graph/queries/types";
 import { heatmapSvg } from "@/lib/charts/heatmap";
 import { MaturityControl } from "./maturity-control";
 import { AddCapabilityForm } from "./add-capability-form";
+import { DeleteNodeButton } from "../delete-node-button";
 
 export default async function CapabilitiesPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const db = createHumanClient();
 
-  const [cells, heatmap] = await Promise.all([
-    listCapabilityCells(db, id),
-    resolveBinding("capabilities.heatmap(level=2, colour_by=gap)", { engagementId: id, db }),
-  ]);
+  // One fetch for the whole page; the heatmap is derived from the same cells the
+  // inventory table uses (no second identical query).
+  const cells = await listCapabilityCells(db, id);
   // Only build the SVG when there's something to show — a brand-new client has an
   // empty inventory until capabilities are added.
-  const svg = cells.length > 0 ? heatmapSvg(heatmap.vm as CapabilityHeatmap) : "";
+  const svg = cells.length > 0 ? heatmapSvg(heatmapFromCells(cells, 2, "gap")) : "";
 
   // Inventory ordering: each level-1 domain followed by its children.
   const level1 = cells.filter((c) => c.level === 1).sort((a, b) => a.label.localeCompare(b.label));
@@ -61,6 +61,7 @@ export default async function CapabilitiesPage({ params }: { params: Promise<{ i
                 <th className="px-3 py-2 font-medium">Current</th>
                 <th className="px-3 py-2 font-medium">Gap</th>
                 <th className="px-3 py-2 font-medium">Weighted</th>
+                <th className="px-3 py-2 font-medium"></th>
               </tr>
             </thead>
             <tbody>
@@ -80,6 +81,14 @@ export default async function CapabilitiesPage({ params }: { params: Promise<{ i
                     </span>
                   </td>
                   <td className="px-3 py-2 text-neutral-600">{c.gapWeighted}</td>
+                  <td className="px-3 py-2 text-right">
+                    <DeleteNodeButton
+                      kind="capability"
+                      engagementId={id}
+                      nodeId={c.nodeId}
+                      confirmLabel={c.level === 1 ? "Delete domain + its capabilities?" : "Delete capability?"}
+                    />
+                  </td>
                 </tr>
               ))}
             </tbody>

@@ -9,6 +9,22 @@ function colourValueFor(cell: CapabilityCell, colourBy: string): number {
   return cell.gap; // default
 }
 
+// Pure: build the heatmap ViewModel from already-fetched cells. Exposed so a
+// page that has already called listCapabilityCells can render the heatmap
+// without a second identical fetch (the binding path re-fetches internally).
+export function heatmapFromCells(
+  all: CapabilityCell[],
+  level = 2,
+  colourBy = "gap",
+): CapabilityHeatmap {
+  const cells = all
+    .filter((c) => c.level === level)
+    .map((c) => ({ ...c, colourValue: colourValueFor(c, colourBy) }))
+    .sort((a, b) => b.gapWeighted - a.gapWeighted);
+  const scale = colourBy === "gap" ? { min: 0, max: 4, midpoint: 2 } : { min: 1, max: 5, midpoint: 3 };
+  return { cells, scale };
+}
+
 // §3.3 — capabilities.heatmap(level=2, colour_by=gap)
 export const capabilitiesHeatmap: GraphQuery<CapabilityHeatmap> = {
   id: "capabilities.heatmap",
@@ -23,17 +39,7 @@ export const capabilitiesHeatmap: GraphQuery<CapabilityHeatmap> = {
     const level = (args.level as number) ?? 2;
     const colourBy = (args.colour_by as string) ?? "gap";
     const all = await listCapabilityCells(ctx.db, ctx.engagementId);
-    const cells = all
-      .filter((c) => c.level === level)
-      .map((c) => ({ ...c, colourValue: colourValueFor(c, colourBy) }))
-      .sort((a, b) => b.gapWeighted - a.gapWeighted);
-
-    // Fixed, meaningful scale so colour is stable across engagements and edits.
-    const scale =
-      colourBy === "gap"
-        ? { min: 0, max: 4, midpoint: 2 }
-        : { min: 1, max: 5, midpoint: 3 };
-    return { cells, scale };
+    return heatmapFromCells(all, level, colourBy);
   },
 
   evidenceNodeIds: (vm) => vm.cells.map((c) => c.nodeId),
