@@ -6,73 +6,83 @@ You can run it for as many clients as you like. Each client is kept completely s
 
 ---
 
-## The big picture (how it fits together)
+## What it runs on
 
-The app has three moving parts. You don't need to understand the internals — just know what each one is and that you own it:
+Three services. You don't need to understand the internals — just know what each is:
 
-| Part | What it is | Who provides it |
+| Service | What it does | Cost |
 |---|---|---|
-| **The website** | What you and your team open in a browser. Hosted on **Netlify**. | You set it up once (below). |
-| **The database** | Where all your clients' data lives. Hosted on **Supabase** (free to start). | You set it up once (below). |
-| **The AI** | Drafts the SWOT and the growth options. Uses **Anthropic (Claude)**. | Your own Anthropic API key. |
-
-All three are **your own accounts with your own keys**. Nothing runs on the previous developer's accounts.
+| **Netlify** | Hosts the website you open in a browser. | Free to start |
+| **Supabase** | Hosts the database where all client data lives. | Free to start |
+| **Anthropic (Claude)** | The AI that drafts the SWOT and the growth options. | Pay per use (cents per draft) |
 
 ---
 
-## Part A — One-time setup (about 30 minutes)
+## Part A — Handover: transfer the live app (recommended)
 
-You'll create three free accounts, build the database, put the site online, and you're done. Follow it in order.
+The app is **already built and running** on the previous owner's Netlify and Supabase accounts. The clean way to hand it over is to **transfer those to you** — you get the working app, with all its data and settings intact, running on **your** accounts. Nothing is rebuilt.
 
-### Step 1 — Create the database (Supabase)
+> **Terminology:** below, **"the outgoing owner"** is whoever currently runs the app (the consultant handing it over) and **"you"** is the person receiving it. The two of you do this together once; it takes about 20 minutes.
 
-1. Go to **[supabase.com](https://supabase.com)** and sign up (free).
-2. Click **New project**. Give it a name (e.g. "Strategy Journey"), choose a strong database password (save it somewhere safe), pick the region closest to you, and create it. Wait ~2 minutes for it to finish setting up.
-3. In the left menu, open the **SQL Editor**.
-4. Now you'll build the database by pasting in five setup files **in order**. They live in this project in the `supabase/migrations` folder. For each file below, open it, copy **all** of its contents, paste into a new SQL Editor query, and click **Run**. Do them in this exact order:
-   1. `0001_prototype_schema.sql`
-   2. `0002_human_access_and_intake.sql`
-   3. `0003_swot_apply.sql`
-   4. `0004_options_and_choice.sql`
-   5. `0005_multi_client.sql`
-   Each should finish with "Success". If one reports an error, stop and check you ran the previous ones first.
-5. **Load the demo client** (optional but recommended): open `supabase/seed.sql`, copy all of it, paste into the SQL Editor, and **Run**. This adds "Meridian Logistics", a fully worked example you can explore or delete later.
-6. Get your two connection values: in the left menu go to **Project Settings → API**. Copy:
-   - the **Project URL** (looks like `https://abcd....supabase.co`)
-   - the **anon public** key (a long string). This is the one labelled "anon"/"public" — safe to use in the website.
+### Step 1 — You create three free accounts
 
-Keep those two values handy for Step 3.
+Just sign up — no setup:
+- **[supabase.com](https://supabase.com)** — then create one **new, empty organization** (e.g. "My Company"). Leave it empty.
+- **[netlify.com](https://netlify.com)** — then create a **team** (Netlify may make one for you automatically; that's fine).
+- **[console.anthropic.com](https://console.anthropic.com)** — add a payment method and a little credit, then create an **API key** (starts with `sk-ant-...`). Keep it for Step 4.
 
-### Step 2 — Get an AI key (Anthropic)
+### Step 2 — You invite the outgoing owner into your Supabase org and Netlify team
 
-1. Go to **[console.anthropic.com](https://console.anthropic.com)** and sign up.
-2. Add a payment method and a small amount of credit (the app uses Claude to draft SWOTs and options — you only pay for what it uses, typically a few cents per draft).
-3. Create an **API key** and copy it (starts with `sk-ant-...`). You'll paste it in Step 3.
+Transfers are only allowed between accounts that share a member, so add them temporarily:
+- **Supabase:** in your new organization → **Organization settings → Team → Invite**, and invite the outgoing owner by email (role: Owner or Administrator).
+- **Netlify:** in your team → **Team settings → Members → Invite**, invite them (role: Owner or Developer).
 
-> Keep this key private. If it's ever exposed, delete it in the console and create a new one — the app keeps working once you update the key in Netlify.
+They accept both invites.
 
-### Step 3 — Put the site online (Netlify)
+### Step 3 — The outgoing owner transfers the project and the site to you
 
-1. Go to **[netlify.com](https://netlify.com)** and sign up (free).
-2. Make sure this project's code is in a **GitHub repository** you own (if the developer handed you a GitHub repo, you already have this).
-3. In Netlify click **Add new site → Import an existing project**, connect GitHub, and pick the repository. Netlify detects Next.js automatically — leave the build settings as they are and don't deploy yet.
-4. Before deploying, open **Site settings → Environment variables** and add these three (names must match exactly):
+- **Supabase (the database):** in the project → **Project Settings → General → Transfer project** → choose **your** organization → confirm. The database, all its data, its web address, **and its keys stay exactly the same** — only who owns and pays changes.
+- **Netlify (the website):** in the site → **Project configuration → General → Project information → Transfer project** → choose **your** team → confirm. The live web address (`...netlify.app`) stays the same.
+- **The code (GitHub), optional but recommended:** the outgoing owner transfers the code repository to your GitHub account (**repo → Settings → Danger Zone → Transfer ownership**). This matters only if you'll ever have a developer update the app later; the running site works regardless.
+
+### Step 4 — You put in your own Anthropic key and redeploy
+
+Billing for the AI can't be transferred (it's tied to an account), so this is the one key you set yourself:
+1. In your Netlify site → **Project configuration → Environment variables**.
+2. Make sure these three exist; set `ANTHROPIC_API_KEY` to **your** key from Step 1:
 
    | Name | Value |
    |---|---|
-   | `NEXT_PUBLIC_SUPABASE_URL` | the Project URL from Step 1.6 |
-   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | the anon public key from Step 1.6 |
-   | `ANTHROPIC_API_KEY` | the `sk-ant-...` key from Step 2 |
+   | `NEXT_PUBLIC_SUPABASE_URL` | (unchanged — already correct after the transfer) |
+   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | (unchanged — already correct after the transfer) |
+   | `ANTHROPIC_API_KEY` | your `sk-ant-...` key |
 
-5. Click **Deploy**. After a couple of minutes you'll get a web address (like `your-site.netlify.app`). Open it — you'll see the **Clients** screen. If you loaded the demo in Step 1.5, "Meridian Logistics" is there.
+3. Go to **Deploys → Trigger deploy → Deploy project** so the new key takes effect.
+4. Open your site's web address. You should see the **Clients** screen with the demo client "Meridian Logistics".
 
-That's it. Bookmark the address. To change any key later, update it in Netlify's Environment variables and redeploy.
+### Step 5 — Remove the outgoing owner (once it's working)
 
-> **Prefer to run it on your own computer instead of hosting it?** It's possible (install [Node.js](https://nodejs.org), copy `.env.example` to `.env.local` and fill in the same three values, then run `npm install` and `npm run dev`, and open `http://localhost:3000`) — but the Netlify route above is simpler and lets your whole team use one link.
+When you've confirmed the site works on your accounts, remove the outgoing owner from your Supabase org and Netlify team (same Members screens as Step 2). Everything now runs entirely on your accounts, and only you are billed.
+
+> **After this, the keys are yours:** the Supabase keys became yours the moment you owned the project, and the Anthropic key is the one you set in Step 4. You can rotate any of them anytime in Netlify's Environment variables (then redeploy).
 
 ---
 
-## Part B — How to use the app
+## Part B — Alternative: build a fresh copy from scratch
+
+You only need this if a transfer isn't possible, or you want a brand-new independent copy (e.g. a second environment). It builds an empty app on your own accounts from the code.
+
+1. **Database (Supabase):** create a project. Open the **SQL Editor** and run these five files from `supabase/migrations/`, **in order**, pasting each one's full contents and clicking Run: `0001_prototype_schema.sql`, `0002_human_access_and_intake.sql`, `0003_swot_apply.sql`, `0004_options_and_choice.sql`, `0005_multi_client.sql`. To load the demo client, also run `supabase/seed.sql`. Then from **Project Settings → API** copy the **Project URL** and the **anon public** key.
+2. **AI key (Anthropic):** create an API key at [console.anthropic.com](https://console.anthropic.com).
+3. **Website (Netlify):** put this project's code in a GitHub repo you own, then in Netlify **Add new project → Import an existing project** and pick it. Under **Environment variables** add `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and `ANTHROPIC_API_KEY`, then **Deploy**.
+
+(A developer with the Supabase CLI can do the database step in one command: `supabase db reset` applies all migrations plus the seed.)
+
+> **Prefer to run it on your own computer instead of hosting it?** Install [Node.js](https://nodejs.org), copy `.env.example` to `.env.local` and fill in the same three values, then run `npm install` and `npm run dev`, and open `http://localhost:3000`.
+
+---
+
+## Part C — How to use the app
 
 ### The Clients screen
 
@@ -93,7 +103,7 @@ Press **Create client & start**. The app sets them up with a **starter set of bu
 
 Each tab builds on the one before, and the app won't let you skip the evidence.
 
-1. **Signals** — the sourced facts. Each one needs a source (a web link *or* an interview reference like "CFO, on this date") and a date. This is the foundation; you cannot save a fact without saying where it came from.
+1. **Signals** — the sourced facts. Each one needs a source (a web link *or* an interview reference like "CFO, on this date") and a date. You cannot save a fact without saying where it came from.
 2. **Insights** — your interpretations. Each must link to at least one signal.
 3. **Capabilities** — how the client measures up. Score each capability's current vs. required maturity; the heatmap shows the gaps. Use **+ Add capability** to add your own, or edit the starter set.
 4. **SWOT** — click **Derive SWOT** and the AI drafts it from your capabilities and signals. Every item shows the evidence it came from. You edit the wording; deleting an item asks you why (so evidence is never quietly dropped).
@@ -116,16 +126,13 @@ There's a longer walk-through in `docs/OPERATOR-GUIDE.md` you can share with any
 - **The demo client (Meridian).** Safe to explore. Delete it whenever you like — it won't affect your real clients.
 - **The deck's look.** The generated slides currently use a neutral placeholder theme, clearly labelled. When you provide your firm's PowerPoint template, the same slides can be re-skinned in your brand — no rework to the app.
 - **The AI never decides.** By design, the app's AI can draft options but is technically prevented from recording a choice or a decision. Choices are always human-made. This is enforced deep in the database, not just asked politely.
-- **Your keys are yours.** Everything runs on your Supabase, Netlify, and Anthropic accounts. Rotate any key anytime by updating it in Netlify.
 
 ---
 
 ## For a technical helper (optional)
 
-If you have a developer assisting, the deeper design notes live in:
+Deeper design notes live in:
 - `CLAUDE.md` — scope and architecture.
-- `docs/adr/` — the "why" behind key decisions.
+- `docs/adr/` — the "why" behind key decisions (see `0009` for the multi-client + handover design).
 - `docs/graph-queries.md` — how the deck reads from the data.
 - `supabase/migrations/` — the database definition (the five files above).
-
-They can also run the database with the Supabase CLI (`supabase db reset` applies all migrations + seed) instead of pasting files by hand.
