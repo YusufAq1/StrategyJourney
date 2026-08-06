@@ -11,7 +11,7 @@ export const engagementMeta: GraphQuery<EngagementMeta> = {
   async resolve(ctx: QueryContext): Promise<EngagementMeta> {
     const { data, error } = await ctx.db
       .from("engagement")
-      .select("org_name,name,horizon,key_questions,stage_current")
+      .select("org_name,name,industry,horizon,key_questions,stage_current")
       .eq("id", ctx.engagementId)
       .single();
     if (error) throw new Error(`engagement.meta: ${error.message}`);
@@ -20,6 +20,7 @@ export const engagementMeta: GraphQuery<EngagementMeta> = {
     return {
       clientName: (data as { org_name: string }).org_name,
       engagementName: (data as { name: string }).name,
+      industry: (data as { industry: string | null }).industry ?? null,
       horizon: (data as { horizon: string | null }).horizon,
       keyQuestions: Array.isArray(kq) ? (kq as string[]) : [],
       generatedAt: new Date().toISOString(),

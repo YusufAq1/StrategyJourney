@@ -232,7 +232,7 @@ Do not rank them. Do not recommend one.
 If the evidence is insufficient to assess an option, say so in open_questions.
 ```
 
-A weak option set is worse than none — it makes a poor choice look considered. Use Opus 5 here; this is the hardest generative task in the prototype.
+A weak option set is worse than none — it makes a poor choice look considered. Use Sonnet 5 here; this is the hardest generative task in the prototype.
 
 ### Model allocation
 
@@ -240,7 +240,7 @@ A weak option set is worse than none — it makes a poor choice look considered.
 |---|---|
 | SWOT derivation (ranking + phrasing) | Sonnet 5 |
 | Slide narrative + speaker notes | Sonnet 5 |
-| Growth option generation | Opus 5 |
+| Growth option generation | Sonnet 5 |
 
 Structured output via tool use throughout. Log every call to `ai_run` with `accepted` — the proportion of generated content a consultant actually keeps is the only honest measure of whether the AI layer earns its place.
 
@@ -300,7 +300,7 @@ Appendix C item 6. Extract theme colours, fonts and layout geometry from Strateg
 | Frontend | Next.js 15 (App Router), TypeScript, Tailwind, shadcn/ui |
 | Backend | Next.js route handlers + server actions |
 | Database | Postgres via Supabase (local dev via CLI) |
-| AI | Anthropic API — Sonnet 5, Opus 5. All calls via `/lib/ai/service.ts` |
+| AI | Anthropic API — Sonnet 5, Opus 4.8. All calls via `/lib/ai/service.ts` |
 | Deck | `pptxgenjs` server-side |
 | Charts | Server-rendered SVG |
 | Rendering | Synchronous for v0.1 with a loading state. Deck render must complete under 60s for 7 slides — if it does not, move to a job runner rather than raising the timeout. |

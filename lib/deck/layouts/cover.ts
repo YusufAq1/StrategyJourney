@@ -39,7 +39,7 @@ export function renderCover(pptx: InstanceType<typeof pptxgen>, vm: EngagementMe
   });
 
   // Client / subtitle.
-  slide.addText(vm.clientName, {
+  slide.addText(vm.industry ? `${vm.clientName}  ·  ${vm.industry}` : vm.clientName, {
     x: L, y: 4.0, w: contentW, h: 0.5,
     fontFace: T.font.heading, fontSize: T.size.coverSubtitle, color: T.color.ink, align: "left",
   });

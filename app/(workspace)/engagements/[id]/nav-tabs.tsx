@@ -12,6 +12,10 @@ export function NavTabs({ id }: { id: string }) {
     { href: `${base}/insights`, label: "Insights", exact: false },
     { href: `${base}/capabilities`, label: "Capabilities", exact: false },
     { href: `${base}/swot`, label: "SWOT", exact: false },
+    { href: `${base}/options`, label: "Options", exact: false },
+    { href: `${base}/choice`, label: "Choice", exact: false },
+    { href: `${base}/coherence`, label: "Coherence", exact: false },
+    { href: `${base}/deck`, label: "Deck", exact: false },
   ];
   return (
     <nav className="mt-3 flex gap-1">

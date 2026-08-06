@@ -8,9 +8,21 @@ export type EngagementRow = {
   id: string;
   orgName: string;
   name: string;
+  industry: string | null;
+  description: string | null;
   horizon: string | null;
   keyQuestions: string[];
   stageCurrent: string;
+};
+
+export type EngagementSummary = {
+  id: string;
+  orgName: string;
+  name: string;
+  industry: string | null;
+  horizon: string | null;
+  status: string;
+  createdAt: string;
 };
 
 export type SignalRow = {
@@ -51,7 +63,7 @@ export type NodeRow = {
 export async function getEngagement(db: SupabaseClient, id: string): Promise<EngagementRow> {
   const { data, error } = await db
     .from("engagement")
-    .select("id,org_name,name,horizon,key_questions,stage_current")
+    .select("id,org_name,name,industry,description,horizon,key_questions,stage_current")
     .eq("id", id)
     .single();
   if (error) throw new Error(`engagement: ${error.message}`);
@@ -60,10 +72,30 @@ export async function getEngagement(db: SupabaseClient, id: string): Promise<Eng
     id: data.id,
     orgName: data.org_name,
     name: data.name,
+    industry: data.industry ?? null,
+    description: data.description ?? null,
     horizon: data.horizon,
     keyQuestions: Array.isArray(kq) ? (kq as string[]) : [],
     stageCurrent: data.stage_current,
   };
+}
+
+// All engagements for the client-picker landing page, newest first.
+export async function listEngagements(db: SupabaseClient): Promise<EngagementSummary[]> {
+  const { data, error } = await db
+    .from("engagement")
+    .select("id,org_name,name,industry,horizon,status,created_at")
+    .order("created_at", { ascending: true });
+  if (error) throw new Error(`engagements: ${error.message}`);
+  return ((data ?? []) as Record<string, unknown>[]).map((r) => ({
+    id: r.id as string,
+    orgName: r.org_name as string,
+    name: r.name as string,
+    industry: (r.industry as string | null) ?? null,
+    horizon: (r.horizon as string | null) ?? null,
+    status: r.status as string,
+    createdAt: r.created_at as string,
+  }));
 }
 
 export async function countByType(db: SupabaseClient, engagementId: string): Promise<Record<string, number>> {

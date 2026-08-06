@@ -1,0 +1,24 @@
+# Netlify build configuration for the Strategy Journey Platform (Next.js 15).
+#
+# Netlify auto-installs @netlify/plugin-nextjs when it sees this file, which
+# adapts the App Router (Server Components, Server Actions, the deck render
+# route) to Netlify's runtime. Nothing here is Vercel-specific.
+#
+# Set the three environment variables in the Netlify UI
+# (Site settings -> Environment variables) — never commit them:
+#   NEXT_PUBLIC_SUPABASE_URL
+#   NEXT_PUBLIC_SUPABASE_ANON_KEY
+#   ANTHROPIC_API_KEY
+#
+# DATABASE_URL is only needed for `npm run db:assert` / the test suite, not for
+# the running site, so it does not need to be set in Netlify.
+
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+[build.environment]
+  NODE_VERSION = "20.11.0"

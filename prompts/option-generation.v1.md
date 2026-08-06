@@ -1,7 +1,7 @@
 ---
 id: option-generation
 version: v1
-model: claude-sonnet-5
+model: claude-opus-5
 purpose: Generate a set of growth options spanning the strategic space
 writes: option nodes + option_detail + derives_from edges (NEVER a choice node)
 ---

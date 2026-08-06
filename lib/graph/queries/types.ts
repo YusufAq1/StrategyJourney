@@ -5,10 +5,23 @@
 export type EngagementMeta = {
   clientName: string;
   engagementName: string;
+  industry: string | null;
   horizon: string | null;
   keyQuestions: string[];
   generatedAt: string; // ISO
   stageCurrent: string;
+};
+
+// §3.2 — signals.summary(by=dimension)
+export type SignalSummary = {
+  totalSignals: number;
+  dateRange: { earliest: string; latest: string } | null;
+  byDimension: Array<{
+    dimension: string;
+    count: number;
+    meanCredibility: number;
+    exemplars: Array<{ nodeId: string; label: string; sourceRef: string; publishedAt: string }>;
+  }>;
 };
 
 // §3.3 / §3.4 — capability heatmap + gaps cell.
@@ -57,4 +70,33 @@ export type SwotItem = {
 export type SwotView = {
   quadrants: Record<SwotQuadrant, SwotItem[]>;
   deletedCount: number;
+};
+
+// §3.6 — options.all(). No rank/score/preference field, by design (Rule 3).
+export type OptionPrereq = { capabilityNodeId: string; requiredMaturity: number; currentlyHeld: boolean };
+export type OptionCard = {
+  nodeId: string;
+  label: string;
+  vector: string | null;
+  theBet: string;
+  prerequisiteCapabilities: OptionPrereq[];
+  whatMustBeTrue: string;
+  strongestArgumentAgainst: string;
+  requiresNewCapability: boolean;
+  openQuestions: string | null;
+  evidenceNodeIds: string[];
+  selected: boolean;
+};
+export type OptionsView = { options: OptionCard[] };
+
+// §3.7 — choice.selected()
+export type ChoiceView = {
+  nodeId: string;
+  statement: string;
+  decidedBy: string;
+  decidedAt: string;
+  rationale: string;
+  alternativesConsidered: { label: string; whyNot: string }[];
+  revisitTrigger: string | null;
+  tracesTo: { nodeId: string; type: "insight" | "swot_item"; label: string }[];
 };
