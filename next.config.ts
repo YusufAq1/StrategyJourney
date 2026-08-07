@@ -12,6 +12,14 @@ const nextConfig: NextConfig = {
   // home directory otherwise makes Next infer the wrong root (and warn about
   // "multiple lockfiles") and trace files from there.
   outputFileTracingRoot: projectRoot,
+
+  // /lib/ai/derivations/* load prompts/*.md via fs.readFile at runtime, which
+  // Next's output file tracing can't see (it only follows static imports).
+  // Without this, the prompts directory is dropped from the deployed
+  // serverless function bundle and readFile 404s in production.
+  outputFileTracingIncludes: {
+    "/**": ["./prompts/**/*.md"],
+  },
 };
 
 export default nextConfig;
