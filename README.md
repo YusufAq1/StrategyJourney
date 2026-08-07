@@ -70,23 +70,7 @@ To publish a code change: put the updated files in the project folder, then on N
 
 > **Want automatic updates?** If you (or a developer) later put the project in a free GitHub account and connect it to Netlify once, every change publishes by itself when saved. The drag-and-drop above works without it.
 
----
-
-## Part B — Alternative: build a fresh copy from scratch
-
-You only need this if you want a brand-new, independent copy with an **empty** database (e.g. a second environment), rather than taking over the existing one.
-
-1. **Database (Supabase):** create a project. Open the **SQL Editor** and run these five files from `supabase/migrations/`, **in order**, pasting each one's full contents and clicking Run: `0001_prototype_schema.sql`, `0002_human_access_and_intake.sql`, `0003_swot_apply.sql`, `0004_options_and_choice.sql`, `0005_multi_client.sql`. To load the demo client, also run `supabase/seed.sql`. Then from **Project Settings → API** copy the **Project URL** and the **anon public** key.
-2. **AI key (Anthropic):** create an API key at [console.anthropic.com](https://console.anthropic.com).
-3. **Website (Netlify):** deploy exactly as in **Part A, Step 3** (the drag-and-drop method), using this project's URL and keys.
-
-(A developer with the Supabase CLI can do the database step in one command: `supabase db reset` applies all migrations plus the seed.)
-
-> **Prefer to run it on your own computer instead of hosting it?** Install [Node.js](https://nodejs.org), copy `.env.example` to `.env.local` and fill in the three values, then run `npm install` and `npm run dev`, and open `http://localhost:3000`.
-
----
-
-## Part C — How to use the app
+## Part B — How to use the app
 
 ### The Clients screen
 
