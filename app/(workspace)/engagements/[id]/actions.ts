@@ -161,20 +161,66 @@ export async function addCapabilityAction(_prev: FormState, formData: FormData):
   return null;
 }
 
-// SWOT derivation (Sonnet 5). AI writes run as ai_service via derive_swot_apply
-// inside the derivation; this action just orchestrates and surfaces errors.
-export async function deriveSwotAction(_prev: FormState, formData: FormData): Promise<FormState> {
+// SWOT derivation (Sonnet 5). The model call routinely runs past Netlify's
+// synchronous function limit, so this action only starts the run (an ai_run
+// row + a trigger to the Netlify Background Function that does the actual
+// work) and returns immediately; the swot page polls checkAiRunStatusAction
+// until it lands. Locally (no `netlify dev`, so no functions endpoint to
+// trigger) it falls back to running the derivation inline.
+export type DerivationState = { error: string } | { runId: string } | null;
+
+export async function deriveSwotAction(_prev: DerivationState, formData: FormData): Promise<DerivationState> {
   const engagementId = String(formData.get("engagementId") ?? "");
   if (!/^[0-9a-f-]{36}$/i.test(engagementId)) return { error: "Missing engagement." };
-  try {
-    const { deriveSwot } = await import("@/lib/ai/derivations/swot");
-    const db = createHumanClient();
-    await deriveSwot(db, engagementId);
-  } catch (e) {
-    return { error: (e as Error).message };
+
+  const db = createHumanClient();
+  const { data: runId, error } = await db.rpc("start_ai_run", {
+    p_engagement_id: engagementId,
+    p_purpose: "swot_derivation",
+    p_model: "claude-sonnet-5",
+    p_prompt_template_id: "swot-derivation",
+    p_prompt_version: "v1",
+  });
+  if (error || !runId) return { error: error?.message ?? "Could not start the derivation." };
+
+  const base = process.env.URL || process.env.DEPLOY_URL || "";
+  if (!base) {
+    // Local dev without `netlify dev` running — no background functions
+    // endpoint to hit, so run inline (there's no 10s Lambda limit on localhost).
+    try {
+      const { deriveSwot } = await import("@/lib/ai/derivations/swot");
+      await deriveSwot(db, engagementId, runId);
+    } catch (e) {
+      await db.rpc("fail_ai_run", { p_run_id: runId, p_error: (e as Error).message });
+      return { error: (e as Error).message };
+    }
+    revalidatePath(`/engagements/${engagementId}/swot`);
+    return { runId };
   }
-  revalidatePath(`/engagements/${engagementId}/swot`);
-  return null;
+
+  try {
+    await fetch(`${base}/.netlify/functions/derive-swot-background`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ engagementId, runId }),
+    });
+  } catch (e) {
+    await db.rpc("fail_ai_run", { p_run_id: runId, p_error: (e as Error).message });
+    return { error: "Could not start the background derivation." };
+  }
+  return { runId };
+}
+
+// Polled by DeriveButton / GenerateOptionsButton until status leaves 'running'.
+export async function checkAiRunStatusAction(
+  runId: string,
+): Promise<{ status: "running" | "succeeded" | "failed"; error: string | null } | null> {
+  if (!/^[0-9a-f-]{36}$/i.test(runId)) return null;
+  const db = createHumanClient();
+  const { data, error } = await db.rpc("get_ai_run_status", { p_run_id: runId }).single();
+  if (error || !data) return null;
+  const row = data as { status: string; error_message: string | null };
+  return { status: row.status as "running" | "succeeded" | "failed", error: row.error_message };
 }
 
 const deleteSwotSchema = z.object({
@@ -200,19 +246,47 @@ export async function deleteSwotItemAction(_prev: FormState, formData: FormData)
   return null;
 }
 
-// Option generation (Opus 5). AI writes run as ai_service via generate_options_apply.
-export async function generateOptionsAction(_prev: FormState, formData: FormData): Promise<FormState> {
+// Option generation (Opus 5, sometimes two sequential calls). Same async
+// start-and-poll pattern as deriveSwotAction — this is the slower of the two
+// derivations and would time out even more reliably if left synchronous.
+export async function generateOptionsAction(_prev: DerivationState, formData: FormData): Promise<DerivationState> {
   const engagementId = String(formData.get("engagementId") ?? "");
   if (!/^[0-9a-f-]{36}$/i.test(engagementId)) return { error: "Missing engagement." };
-  try {
-    const { generateOptions } = await import("@/lib/ai/derivations/options");
-    const db = createHumanClient();
-    await generateOptions(db, engagementId);
-  } catch (e) {
-    return { error: (e as Error).message };
+
+  const db = createHumanClient();
+  const { data: runId, error } = await db.rpc("start_ai_run", {
+    p_engagement_id: engagementId,
+    p_purpose: "option_generation",
+    p_model: "claude-opus-5",
+    p_prompt_template_id: "option-generation",
+    p_prompt_version: "v1",
+  });
+  if (error || !runId) return { error: error?.message ?? "Could not start generation." };
+
+  const base = process.env.URL || process.env.DEPLOY_URL || "";
+  if (!base) {
+    try {
+      const { generateOptions } = await import("@/lib/ai/derivations/options");
+      await generateOptions(db, engagementId, runId);
+    } catch (e) {
+      await db.rpc("fail_ai_run", { p_run_id: runId, p_error: (e as Error).message });
+      return { error: (e as Error).message };
+    }
+    revalidatePath(`/engagements/${engagementId}/options`);
+    return { runId };
   }
-  revalidatePath(`/engagements/${engagementId}/options`);
-  return null;
+
+  try {
+    await fetch(`${base}/.netlify/functions/generate-options-background`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ engagementId, runId }),
+    });
+  } catch (e) {
+    await db.rpc("fail_ai_run", { p_run_id: runId, p_error: (e as Error).message });
+    return { error: "Could not start the background generation." };
+  }
+  return { runId };
 }
 
 // The choice — HUMAN only (make_choice runs as the caller, never ai_service).

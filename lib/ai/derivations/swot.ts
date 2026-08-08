@@ -57,7 +57,7 @@ export type DeriveResult = {
   coverageGaps: string[];
 };
 
-export async function deriveSwot(db: SupabaseClient, engagementId: string): Promise<DeriveResult> {
+export async function deriveSwot(db: SupabaseClient, engagementId: string, runId?: string | null): Promise<DeriveResult> {
   const [eng, caps, signals, prompt] = await Promise.all([
     getEngagement(db, engagementId),
     listCapabilityCells(db, engagementId),
@@ -137,6 +137,7 @@ export async function deriveSwot(db: SupabaseClient, engagementId: string): Prom
     p_tokens_out: tokensOut,
     p_created_by: CURRENT_USER_ID,
     p_output: { items: emitted.items, coverage_gaps: emitted.coverage_gaps, rejected },
+    p_run_id: runId ?? null,
   });
   if (error) throw new Error(`derive_swot_apply: ${error.message}`);
 

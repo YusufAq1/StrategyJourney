@@ -22,3 +22,10 @@
 
 [build.environment]
   NODE_VERSION = "20.11.0"
+
+# derive-swot-background / generate-options-background load prompts/*.md via
+# fs.readFile at runtime (never inline a prompt in code — CLAUDE.md §13), so
+# the prompts directory has to be bundled into the function explicitly; it
+# isn't picked up by static analysis.
+[functions]
+  included_files = ["prompts/**"]

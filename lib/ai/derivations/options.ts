@@ -54,7 +54,7 @@ async function loadPrompt(): Promise<{ system: string; tool: ToolTool }> {
 
 export type OptionsDeriveResult = { applied: number; rejected: number; vectors: number };
 
-export async function generateOptions(db: SupabaseClient, engagementId: string): Promise<OptionsDeriveResult> {
+export async function generateOptions(db: SupabaseClient, engagementId: string, runId?: string | null): Promise<OptionsDeriveResult> {
   const [eng, caps, signals, swotRes, prompt] = await Promise.all([
     getEngagement(db, engagementId),
     listCapabilityCells(db, engagementId),
@@ -142,6 +142,7 @@ export async function generateOptions(db: SupabaseClient, engagementId: string):
     p_tokens_out: run.tokensOut,
     p_created_by: CURRENT_USER_ID,
     p_output: { options: run.raw, rejected: run.rejected },
+    p_run_id: runId ?? null,
   });
   if (error) throw new Error(`generate_options_apply: ${error.message}`);
 
