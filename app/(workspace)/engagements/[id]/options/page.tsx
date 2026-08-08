@@ -34,7 +34,7 @@ export default async function OptionsPage({ params }: { params: Promise<{ id: st
 
       {view.options.length === 0 ? (
         <p className="rounded-lg border border-dashed border-neutral-300 bg-white p-8 text-center text-sm text-neutral-500">
-          No options generated yet. Opus 5 generates ≥5 materially different growth options spanning the space, each with its
+          No options generated yet. Sonnet 5 generates ≥5 materially different growth options spanning the space, each with its
           bet, prerequisites, the strongest argument against, and its evidence. It does not rank or recommend.
         </p>
       ) : (

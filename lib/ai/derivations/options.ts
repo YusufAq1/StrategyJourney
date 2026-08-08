@@ -10,7 +10,7 @@ import { CURRENT_USER_ID } from "../../constants";
 const PROMPT_PATH = path.join(process.cwd(), "prompts", "option-generation.v1.md");
 const PROMPT_TEMPLATE_ID = "option-generation";
 const PROMPT_VERSION = "v1";
-const MODEL = "claude-opus-5"; // CLAUDE.md §7: Opus 5, the hardest generative task
+const MODEL = "claude-sonnet-5"; // CLAUDE.md §7 model allocation: Sonnet 5 for every derivation
 const RANK_RE = /\b(best|recommend|preferred|optimal|strongest option|we suggest)\b/i;
 
 type Prereq = { capability_node_id: string; required_maturity: number; currently_held: boolean };

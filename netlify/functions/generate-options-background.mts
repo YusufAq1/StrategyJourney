@@ -1,5 +1,5 @@
 // Background Function counterpart to derive-swot-background.mts — runs
-// option generation (Opus 5, sometimes two sequential calls when the first
+// option generation (Sonnet 5, sometimes two sequential calls when the first
 // pass doesn't span enough vectors), which needs even more headroom than SWOT
 // derivation and would not survive a synchronous request/response cycle.
 //

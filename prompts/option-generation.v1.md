@@ -1,14 +1,14 @@
 ---
 id: option-generation
 version: v1
-model: claude-opus-5
+model: claude-sonnet-5
 purpose: Generate a set of growth options spanning the strategic space
 writes: option nodes + option_detail + derives_from edges (NEVER a choice node)
 ---
 
 # Growth option generation
 
-This is the hardest generative task in the prototype and the one where model tier matters most. **A weak option set is worse than none — it makes a poor choice look considered.** Opus 5, no exceptions, no cost-driven downgrade.
+This is the hardest generative task in the prototype and the one where model tier matters most. **A weak option set is worse than none — it makes a poor choice look considered.** Sonnet 5, no exceptions, no cost-driven downgrade.
 
 ## Contract
 

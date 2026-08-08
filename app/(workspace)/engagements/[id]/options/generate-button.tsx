@@ -48,7 +48,7 @@ export function GenerateOptionsButton({ engagementId, hasOptions }: { engagement
         disabled={busy}
         className="rounded-md bg-[#13294B] px-4 py-2 text-sm font-medium text-white hover:bg-[#1B4F91] disabled:opacity-50"
       >
-        {busy ? "Generating with Opus 5…" : hasOptions ? "Regenerate options" : "Generate options"}
+        {busy ? "Generating with Sonnet 5…" : hasOptions ? "Regenerate options" : "Generate options"}
       </button>
       {state && "error" in state && (
         <p className="max-w-md rounded-md bg-red-50 px-3 py-2 text-xs text-red-700">{state.error}</p>

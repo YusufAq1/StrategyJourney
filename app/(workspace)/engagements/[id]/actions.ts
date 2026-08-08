@@ -246,9 +246,9 @@ export async function deleteSwotItemAction(_prev: FormState, formData: FormData)
   return null;
 }
 
-// Option generation (Opus 5, sometimes two sequential calls). Same async
-// start-and-poll pattern as deriveSwotAction — this is the slower of the two
-// derivations and would time out even more reliably if left synchronous.
+// Option generation (Sonnet 5, sometimes two sequential calls). Same async
+// start-and-poll pattern as deriveSwotAction — this can still run past a
+// synchronous function's limit, especially with the retry.
 export async function generateOptionsAction(_prev: DerivationState, formData: FormData): Promise<DerivationState> {
   const engagementId = String(formData.get("engagementId") ?? "");
   if (!/^[0-9a-f-]{36}$/i.test(engagementId)) return { error: "Missing engagement." };
@@ -257,7 +257,7 @@ export async function generateOptionsAction(_prev: DerivationState, formData: Fo
   const { data: runId, error } = await db.rpc("start_ai_run", {
     p_engagement_id: engagementId,
     p_purpose: "option_generation",
-    p_model: "claude-opus-5",
+    p_model: "claude-sonnet-5",
     p_prompt_template_id: "option-generation",
     p_prompt_version: "v1",
   });
