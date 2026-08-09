@@ -1,0 +1,17 @@
+-- Step 12 (post-prototype) — delete a client (engagement).
+--
+-- The landing page lists every client the practice has created (0005 made this
+-- a multi-client workspace); a consultant needs a way to remove one set up in
+-- error or used for a demo, without a DBA. Deleting the engagement row cascades
+-- through every FK back to it — node, edge, ai_run, decision_log,
+-- coherence_run, deck_render, deck_template (all ON DELETE CASCADE, 0001) —
+-- and node's own cascades take the rest (signal_source, capability,
+-- capability_score, swot_item, option_detail, decision_node). This is a hard,
+-- irreversible delete with no soft-delete flag; the UI requires typing the
+-- client's name back before submitting, and the server action re-checks that
+-- match before issuing the delete.
+--
+-- No RLS exists on `engagement` (RLS lives only on `node`, per 0006 and
+-- docs/adr/0006), so the table GRANT is the entire story on the human (anon)
+-- path — same shape as the 0006 human_delete addition for node.
+grant delete on engagement to anon;

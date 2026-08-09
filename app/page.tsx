@@ -3,6 +3,7 @@ import { format } from "date-fns";
 import { createHumanClient } from "@/lib/db/human";
 import { listEngagements } from "@/lib/graph/reads";
 import { DEMO_ENGAGEMENT_ID } from "@/lib/constants";
+import { DeleteClientButton } from "./(workspace)/engagements/delete-client-button";
 
 // Always reflect the current client list (a newly created client must appear
 // immediately), so render on demand rather than prerendering at build time.
@@ -50,12 +51,15 @@ export default async function Home() {
         ) : (
           <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {engagements.map((e) => (
-              <li key={e.id}>
+              <li key={e.id} className="relative">
+                <div className="absolute right-3 top-3 z-10">
+                  <DeleteClientButton engagementId={e.id} orgName={e.orgName} />
+                </div>
                 <Link
                   href={`/engagements/${e.id}`}
                   className="block h-full rounded-lg border border-neutral-200 bg-white p-5 transition hover:border-[#1B4F91] hover:shadow-sm"
                 >
-                  <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start justify-between gap-3 pr-14">
                     <div className="text-base font-semibold text-[#13294B]">{e.orgName}</div>
                     {e.id === DEMO_ENGAGEMENT_ID ? (
                       <span className="shrink-0 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700 ring-1 ring-amber-200">

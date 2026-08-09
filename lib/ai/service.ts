@@ -27,6 +27,37 @@ export type ToolCallResult<T> = {
   model: string;
 };
 
+// Occasionally a forced tool call comes back with a top-level property
+// double-encoded as a JSON string — e.g. { options: '{"options":[...]}' }
+// instead of { options: [...] } — rather than the array/object the schema
+// declares. Iterating a string instead of an array silently yields
+// character-by-character garbage downstream, so unwrap it here, once, for
+// every derivation rather than defensively in each caller.
+function coerceToolInput(raw: unknown, schema: Record<string, unknown>): unknown {
+  const props = (schema as { properties?: Record<string, { type?: string }> }).properties;
+  if (!props || typeof raw !== "object" || raw === null) return raw;
+  let result: Record<string, unknown> = { ...(raw as Record<string, unknown>) };
+  for (const [key, propSchema] of Object.entries(props)) {
+    const val = result[key];
+    if (typeof val !== "string") continue;
+    const expected = propSchema?.type;
+    const mismatched =
+      (expected === "array" && !Array.isArray(val)) || (expected === "object" && typeof val !== "object");
+    if (!mismatched) continue;
+    try {
+      const parsed = JSON.parse(val) as unknown;
+      if (parsed && typeof parsed === "object" && key in (parsed as Record<string, unknown>)) {
+        result = { ...result, ...(parsed as Record<string, unknown>) };
+      } else {
+        result[key] = parsed;
+      }
+    } catch {
+      // leave as-is — downstream validation will reject it with a clear error
+    }
+  }
+  return result;
+}
+
 // Structured output via forced tool use. Thinking is disabled: forcing a
 // specific tool is incompatible with extended thinking, and the schema is doing
 // the structuring here. No sampling params (rejected on Sonnet 5 / Opus 5).
@@ -52,7 +83,7 @@ export async function callWithTool<T>(opts: {
     throw new Error("model did not return the expected tool call");
   }
   return {
-    input: block.input as T,
+    input: coerceToolInput(block.input, opts.tool.input_schema) as T,
     tokensIn: res.usage.input_tokens,
     tokensOut: res.usage.output_tokens,
     model: res.model,

@@ -56,3 +56,38 @@ export async function createEngagementAction(_prev: FormState, formData: FormDat
   revalidatePath("/");
   redirect(`/engagements/${data as string}/signals`);
 }
+
+const deleteEngagementSchema = z.object({
+  engagementId: z.string().uuid(),
+  confirmName: z.string().trim().min(1, "Type the client's name to confirm."),
+});
+
+// Permanent, cascading delete (0008: node/edge/ai_run/decision_log/
+// coherence_run/deck_render/deck_template all ON DELETE CASCADE off
+// engagement, and node cascades the rest). No soft-delete, no undo — the
+// confirmName re-check is the backstop against a stray click or a tampered
+// client-side form, since the UI's own match check runs only in the browser.
+export async function deleteEngagementAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const parsed = deleteEngagementSchema.safeParse({
+    engagementId: formData.get("engagementId"),
+    confirmName: formData.get("confirmName"),
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
+
+  const db = createHumanClient();
+  const { data: eng, error: e0 } = await db
+    .from("engagement")
+    .select("org_name")
+    .eq("id", parsed.data.engagementId)
+    .single();
+  if (e0 || !eng) return { error: "Client not found." };
+  if ((eng as { org_name: string }).org_name !== parsed.data.confirmName) {
+    return { error: "That doesn't match the client's name — nothing was deleted." };
+  }
+
+  const { error } = await db.from("engagement").delete().eq("id", parsed.data.engagementId);
+  if (error) return { error: error.message };
+
+  revalidatePath("/");
+  return null;
+}
