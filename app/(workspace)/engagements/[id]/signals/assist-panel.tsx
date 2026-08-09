@@ -1,9 +1,18 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
-import { proposeSignalsAction, acceptProposedSignalAction, type ProposeSignalsState, type FormState } from "../actions";
+import {
+  proposeSignalsAction,
+  acceptProposedSignalAction,
+  extractFileTextAction,
+  type ProposeSignalsState,
+  type FormState,
+  type ExtractFileTextState,
+} from "../actions";
 import { DIMENSIONS, SOURCE_KINDS, dimensionLabel } from "@/lib/constants";
 import type { SignalProposal } from "@/lib/ai/assist-types";
+
+const ACCEPTED_FILE_TYPES = ".pdf,.docx,.md,.markdown,.txt,text/plain,text/markdown,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
 const field = "w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm outline-none focus:border-neutral-500";
 const label = "block text-xs font-medium text-neutral-600 mb-1";
@@ -14,6 +23,21 @@ export function AssistPanel({ engagementId }: { engagementId: string }) {
   const [open, setOpen] = useState(false);
   const [source, setSource] = useState<Source>({ kind: "web", uri: "", reference: "", publishedAt: "" });
   const [state, action, pending] = useActionState<ProposeSignalsState, FormData>(proposeSignalsAction, null);
+
+  const [text, setText] = useState("");
+  const [uploadedFilename, setUploadedFilename] = useState<string | null>(null);
+  const fileFormRef = useRef<HTMLFormElement>(null);
+  const [fileState, fileAction, filePending] = useActionState<ExtractFileTextState, FormData>(extractFileTextAction, null);
+
+  useEffect(() => {
+    if (fileState && "text" in fileState) {
+      setText(fileState.text);
+      setUploadedFilename(fileState.filename);
+    }
+    // Reset the native file input so re-selecting the same file (e.g. after
+    // fixing an unsupported-type error elsewhere) still fires onChange.
+    if (fileState) fileFormRef.current?.reset();
+  }, [fileState]);
 
   if (!open) {
     return (
@@ -36,8 +60,8 @@ export function AssistPanel({ engagementId }: { engagementId: string }) {
         <button onClick={() => setOpen(false)} className="text-xs text-neutral-500 hover:underline">close</button>
       </div>
       <p className="text-xs text-neutral-500">
-        Paste an article, notes, or an interview transcript. The AI drafts candidate signals — <span className="font-medium">you decide</span>;
-        nothing is saved until you accept it.
+        Paste an article, notes, or an interview transcript — or upload a PDF, .docx, .md, or .txt file. The AI drafts candidate signals —{" "}
+        <span className="font-medium">you decide</span>; nothing is saved until you accept it.
       </p>
 
       {/* Shared source — attached to every signal you accept from this text. */}
@@ -62,9 +86,40 @@ export function AssistPanel({ engagementId }: { engagementId: string }) {
         </div>
       </div>
 
+      <form ref={fileFormRef} action={fileAction} className="flex items-center gap-2">
+        <input type="hidden" name="engagementId" value={engagementId} />
+        <input
+          type="file"
+          name="file"
+          accept={ACCEPTED_FILE_TYPES}
+          disabled={filePending}
+          onChange={(e) => {
+            if (e.target.files?.length) e.currentTarget.form?.requestSubmit();
+          }}
+          className="flex-1 text-xs text-neutral-600 file:mr-2 file:rounded file:border-0 file:bg-[#1B4F91]/10 file:px-2 file:py-1 file:text-xs file:font-medium file:text-[#1B4F91]"
+        />
+        {filePending && <span className="text-xs text-neutral-500">Reading file…</span>}
+      </form>
+      {uploadedFilename && !filePending && (
+        <p className="text-xs text-emerald-700">Loaded from {uploadedFilename} — review below before extracting.</p>
+      )}
+      {fileState && "error" in fileState && <p className="rounded-md bg-red-50 px-3 py-2 text-xs text-red-700">{fileState.error}</p>}
+      <p className="text-center text-[10px] uppercase tracking-wide text-neutral-400">or paste text</p>
+
       <form action={action} className="space-y-2">
         <input type="hidden" name="engagementId" value={engagementId} />
-        <textarea name="text" rows={6} required placeholder="Paste the source text here…" className={field} />
+        <textarea
+          name="text"
+          rows={6}
+          required
+          placeholder="Paste the source text here, or upload a PDF/.docx/.md/.txt file above…"
+          className={field}
+          value={text}
+          onChange={(e) => {
+            setText(e.target.value);
+            setUploadedFilename(null);
+          }}
+        />
         <button type="submit" disabled={pending} className="rounded-md bg-[#13294B] px-4 py-2 text-sm font-medium text-white hover:bg-[#1B4F91] disabled:opacity-50">
           {pending ? "Reading…" : "Extract signals"}
         </button>

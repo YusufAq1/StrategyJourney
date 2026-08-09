@@ -25,12 +25,14 @@
     "clsx": "2.1.1",
     "date-fns": "4.1.0",
     "lucide-react": "0.544.0",
+    "mammoth": "1.12.1",
     "next": "^15.5.23",
     "pg": "8.13.3",
     "pptxgenjs": "4.0.1",
     "react": "19.1.1",
     "react-dom": "19.1.1",
     "tailwind-merge": "2.6.0",
+    "unpdf": "1.8.0",
     "zod": "3.25.76"
   },
   "devDependencies": {

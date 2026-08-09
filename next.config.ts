@@ -20,6 +20,15 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/**": ["./prompts/**/*.md"],
   },
+
+  // Signal-extraction file upload (PDF/.docx) needs more than the 1MB default
+  // Server Action body limit. Parsing itself still caps at 10MB — see
+  // lib/files/extract-text.ts.
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "10mb",
+    },
+  },
 };
 
 export default nextConfig;

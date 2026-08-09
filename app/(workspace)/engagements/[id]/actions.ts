@@ -501,6 +501,23 @@ export async function addSwotAction(_prev: FormState, formData: FormData): Promi
 // to ai_run; accepting marks that run accepted.
 // ---------------------------------------------------------------------------
 
+// Parses an uploaded PDF/.docx/.md/.txt file into plain text so it can
+// populate the same paste box the extraction below reads from. Nothing is
+// persisted — the file is parsed in memory and discarded.
+export type ExtractFileTextState = { error: string } | { text: string; filename: string } | null;
+
+export async function extractFileTextAction(_prev: ExtractFileTextState, formData: FormData): Promise<ExtractFileTextState> {
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) return { error: "Choose a file first." };
+  try {
+    const { extractTextFromUpload } = await import("@/lib/files/extract-text");
+    const text = await extractTextFromUpload(file);
+    return { text, filename: file.name };
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+}
+
 export type ProposeSignalsState =
   | { error: string }
   | { proposals: SignalProposal[]; runId: string | null }
