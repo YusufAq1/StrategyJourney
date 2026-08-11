@@ -6,6 +6,7 @@ import { resolveBinding } from "@/lib/graph/queries";
 import { listInsights } from "@/lib/graph/reads";
 import type { OptionsView, SwotView, SwotItem } from "@/lib/graph/queries/types";
 import { ChoiceForm } from "./choice-form";
+import { nodeHref } from "@/lib/nav";
 
 export default async function ChoicePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -24,7 +25,7 @@ export default async function ChoicePage({ params }: { params: Promise<{ id: str
             </span>
           </div>
           <h3 className="mt-2 text-lg font-medium text-[#171258]">
-            <Link href={`/engagements/${id}/nodes/${choice.nodeId}`} className="hover:underline">{choice.statement}</Link>
+            <Link href={nodeHref(id, choice.nodeId, "choice")} className="hover:underline">{choice.statement}</Link>
           </h3>
           <p className="mt-2 text-sm text-neutral-700"><span className="font-medium text-neutral-500">Rationale: </span>{choice.rationale}</p>
           {choice.revisitTrigger && (
@@ -35,7 +36,7 @@ export default async function ChoicePage({ params }: { params: Promise<{ id: str
             <div className="text-xs font-medium text-neutral-600">Rests on</div>
             <div className="mt-1 flex flex-wrap gap-1">
               {choice.tracesTo.map((t) => (
-                <Link key={t.nodeId} href={`/engagements/${id}/nodes/${t.nodeId}`} className="rounded bg-neutral-100 px-1.5 py-0.5 text-[10px] text-neutral-600 hover:bg-neutral-200">
+                <Link key={t.nodeId} href={nodeHref(id, t.nodeId, "choice")} className="rounded bg-neutral-100 px-1.5 py-0.5 text-[10px] text-neutral-600 hover:bg-neutral-200">
                   {t.type} · {t.label.length > 44 ? t.label.slice(0, 44) + "…" : t.label}
                 </Link>
               ))}

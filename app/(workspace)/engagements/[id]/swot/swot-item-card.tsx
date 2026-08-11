@@ -4,6 +4,7 @@ import { useState, useActionState } from "react";
 import Link from "next/link";
 import { deleteSwotItemAction, type FormState } from "../actions";
 import type { SwotItem } from "@/lib/graph/queries/types";
+import { nodeHref } from "@/lib/nav";
 
 export function SwotItemCard({ engagementId, item }: { engagementId: string; item: SwotItem }) {
   const [confirming, setConfirming] = useState(false);
@@ -12,7 +13,9 @@ export function SwotItemCard({ engagementId, item }: { engagementId: string; ite
   return (
     <li className="rounded-md border border-neutral-200 bg-white p-3">
       <div className="flex items-start justify-between gap-2">
-        <p className="text-sm text-neutral-800">{item.statement}</p>
+        <Link href={nodeHref(engagementId, item.nodeId, "swot")} className="text-sm text-neutral-800 hover:underline">
+          {item.statement}
+        </Link>
         <button onClick={() => setConfirming((v) => !v)} className="shrink-0 text-xs text-neutral-400 hover:text-red-600">
           delete
         </button>
@@ -23,7 +26,7 @@ export function SwotItemCard({ engagementId, item }: { engagementId: string; ite
           {item.evidence.map((e) => (
             <Link
               key={e.nodeId}
-              href={`/engagements/${engagementId}/nodes/${e.nodeId}`}
+              href={nodeHref(engagementId, e.nodeId, "swot")}
               title={e.sourceRef ?? undefined}
               className="rounded bg-neutral-100 px-1.5 py-0.5 text-[10px] text-neutral-600 hover:bg-neutral-200"
             >

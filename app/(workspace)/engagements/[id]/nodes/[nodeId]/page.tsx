@@ -4,6 +4,7 @@ import { createHumanClient } from "@/lib/db/human";
 import { getNode } from "@/lib/graph/reads";
 import { getProvenance } from "@/lib/graph/provenance";
 import { dimensionLabel } from "@/lib/constants";
+import { resolveBackTab } from "@/lib/nav";
 
 const typeColor: Record<string, string> = {
   signal: "bg-[#6F40F1] text-white",
@@ -30,8 +31,15 @@ function host(u: string): string {
   }
 }
 
-export default async function NodePage({ params }: { params: Promise<{ id: string; nodeId: string }> }) {
+export default async function NodePage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string; nodeId: string }>;
+  searchParams: Promise<{ from?: string }>;
+}) {
   const { id, nodeId } = await params;
+  const { from } = await searchParams;
   const db = createHumanClient();
   const node = await getNode(db, nodeId);
   if (!node) notFound();
@@ -41,7 +49,11 @@ export default async function NodePage({ params }: { params: Promise<{ id: strin
   const upstream = chain.filter((r) => r.depth > 0);
   const signalCount = chain.filter((r) => r.nodeType === "signal").length;
   const maxDepth = chain.reduce((m, r) => Math.max(m, r.depth), 0);
-  const backTab = node.type === "insight" ? "insights" : node.type === "signal" ? "signals" : "";
+  // The tab this node was reached from, so "back" returns there rather than
+  // always to the overview — falls back to a type-based tab when reached
+  // directly (e.g. a create-action redirect) rather than via a listing page.
+  const backTab = resolveBackTab(node.type, from);
+  const chainQuery = backTab ? `?from=${backTab}` : "";
 
   return (
     <div className="space-y-6">
@@ -103,7 +115,7 @@ export default async function NodePage({ params }: { params: Promise<{ id: strin
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-[10px] text-neutral-400">via {r.via}</span>
                   <TypeBadge t={r.nodeType} />
-                  <Link href={`/engagements/${id}/nodes/${r.nodeId}`} className="text-sm text-[#171258] hover:underline">
+                  <Link href={`/engagements/${id}/nodes/${r.nodeId}${chainQuery}`} className="text-sm text-[#171258] hover:underline">
                     {r.label}
                   </Link>
                 </div>

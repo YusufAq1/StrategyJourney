@@ -4,6 +4,7 @@ import { useState, useActionState } from "react";
 import Link from "next/link";
 import { acceptFindingAction, type FormState } from "../actions";
 import type { FindingView } from "@/lib/coherence/run";
+import { nodeHref } from "@/lib/nav";
 
 export function FindingCard({ engagementId, finding }: { engagementId: string; finding: FindingView }) {
   const [open, setOpen] = useState(false);
@@ -22,7 +23,7 @@ export function FindingCard({ engagementId, finding }: { engagementId: string; f
           <p className="mt-1 text-sm text-neutral-800">{finding.message}</p>
           <div className="mt-1 flex flex-wrap gap-1">
             {finding.nodes.map((n) => (
-              <Link key={n.id} href={`/engagements/${engagementId}/nodes/${n.id}`} className="rounded bg-neutral-100 px-1.5 py-0.5 text-[10px] text-neutral-600 hover:bg-neutral-200">
+              <Link key={n.id} href={nodeHref(engagementId, n.id, "coherence")} className="rounded bg-neutral-100 px-1.5 py-0.5 text-[10px] text-neutral-600 hover:bg-neutral-200">
                 {n.type} · {n.label.length > 36 ? n.label.slice(0, 36) + "…" : n.label}
               </Link>
             ))}

@@ -273,7 +273,7 @@ export async function listCapabilityCells(db: SupabaseClient, engagementId: stri
       maturityCurrent: cur,
       maturityRequired: req,
       gap,
-      gapWeighted: gap * crit,
+      gapWeighted: Math.round(gap * crit * 10) / 10,
       spread,
       contested: spread > 1.0,
       colourValue: gap,

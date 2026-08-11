@@ -122,6 +122,8 @@ Each statement is one specific sentence a board member could disagree with.
 
 Do not hedge. Do not use "may", "could potentially", "in some cases".
 Do not repeat the same underlying fact across quadrants.
+Do not emit two items that rest on the same evidence node ids, even reworded —
+pick the single strongest phrasing of that fact and emit it once.
 Do not produce filler to balance the quadrants. Four well-evidenced threats and
 one opportunity is an honest output; padding it to four each is not.
 
@@ -141,7 +143,7 @@ performed by humans.
 
 1. **Reject unknown node ids.** Any `evidence_node_ids` entry not in the input set → discard the whole item, log to `ai_run.output.rejected`. Do not attempt to repair it.
 2. **Reject empty evidence.** Schema requires `minItems: 1`, but validate again — a schema is not a guarantee.
-3. **Deduplicate** on normalised statement (lowercase, strip punctuation, Levenshtein < 0.15) across quadrants.
+3. **Deduplicate** on normalised statement (lowercase, strip punctuation, exact match) across quadrants, and separately on an exact match of the sorted `evidence_node_ids` set — two items resting on identical evidence are the same fact restated, whatever the wording.
 4. **Renumber ranks** contiguously within each quadrant.
 5. **Write in one transaction:** `node` (type `swot_item`, `origin='ai'`, `provenance_class='derived'`) + `swot_item` row + one `derives_from` edge per evidence id.
 6. **Record `ai_run`** with `accepted = null`. The strategist sets it on review. Acceptance rate below ~50% means the fix is context, not more generation.

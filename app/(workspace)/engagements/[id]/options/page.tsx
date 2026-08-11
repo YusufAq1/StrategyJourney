@@ -3,6 +3,7 @@ import { createHumanClient } from "@/lib/db/human";
 import { resolveBinding } from "@/lib/graph/queries";
 import type { OptionsView } from "@/lib/graph/queries/types";
 import { GenerateOptionsButton } from "./generate-button";
+import { nodeHref } from "@/lib/nav";
 
 const VECTOR_LABEL: Record<string, string> = {
   deeper_penetration: "Deeper penetration",
@@ -42,7 +43,9 @@ export default async function OptionsPage({ params }: { params: Promise<{ id: st
           {view.options.map((o) => (
             <section key={o.nodeId} className={`rounded-lg border bg-white p-4 ${o.selected ? "border-[#C0A15B] ring-1 ring-[#C0A15B]" : "border-neutral-200"}`}>
               <div className="flex items-start justify-between gap-2">
-                <h3 className="text-sm font-semibold text-[#171258]">{o.label}</h3>
+                <h3 className="text-sm font-semibold text-[#171258]">
+                  <Link href={nodeHref(id, o.nodeId, "options")} className="hover:underline">{o.label}</Link>
+                </h3>
                 <div className="flex shrink-0 items-center gap-1">
                   {o.requiresNewCapability && (
                     <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800">needs new capability</span>
@@ -62,7 +65,7 @@ export default async function OptionsPage({ params }: { params: Promise<{ id: st
               {o.evidenceNodeIds.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-1">
                   {o.evidenceNodeIds.map((eid) => (
-                    <Link key={eid} href={`/engagements/${id}/nodes/${eid}`} className="rounded bg-neutral-100 px-1.5 py-0.5 text-[10px] text-neutral-600 hover:bg-neutral-200">
+                    <Link key={eid} href={nodeHref(id, eid, "options")} className="rounded bg-neutral-100 px-1.5 py-0.5 text-[10px] text-neutral-600 hover:bg-neutral-200">
                       evidence
                     </Link>
                   ))}
