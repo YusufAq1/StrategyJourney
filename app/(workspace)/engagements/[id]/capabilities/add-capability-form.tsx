@@ -64,7 +64,7 @@ export function AddCapabilityForm({ engagementId, domains }: { engagementId: str
         <input id="capLabel" name="label" required placeholder={level === "1" ? "e.g. Commercial & Go-to-Market" : "e.g. Key Account Management"} className={field} />
       </div>
 
-      <div className="mt-3 grid grid-cols-3 gap-3">
+      <div className={`mt-3 grid gap-3 ${level === "2" ? "grid-cols-3" : "grid-cols-2"}`}>
         <div>
           <label className={label} htmlFor="criticality">Criticality (1–5)</label>
           <select id="criticality" name="criticality" defaultValue="4" className={field}>
@@ -77,13 +77,20 @@ export function AddCapabilityForm({ engagementId, domains }: { engagementId: str
             {[1, 2, 3, 4, 5].map((n) => <option key={n} value={n}>{n}</option>)}
           </select>
         </div>
-        <div>
-          <label className={label} htmlFor="current">Current (1–5)</label>
-          <select id="current" name="current" defaultValue="1" className={field}>
-            {[1, 2, 3, 4, 5].map((n) => <option key={n} value={n}>{n}</option>)}
-          </select>
-        </div>
+        {level === "2" && (
+          <div>
+            <label className={label} htmlFor="current">Current (1–5)</label>
+            <select id="current" name="current" defaultValue="1" className={field}>
+              {[1, 2, 3, 4, 5].map((n) => <option key={n} value={n}>{n}</option>)}
+            </select>
+          </div>
+        )}
       </div>
+      {level === "1" && (
+        <p className="mt-2 text-xs text-neutral-400">
+          A domain&rsquo;s current maturity is the average of its capabilities once you add them below — no need to score it directly.
+        </p>
+      )}
 
       {state?.error && <p className="mt-3 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{state.error}</p>}
 

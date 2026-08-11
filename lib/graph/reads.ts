@@ -229,18 +229,40 @@ export async function listCapabilityCells(db: SupabaseClient, engagementId: stri
     vById[v.node_id] = { maturity_current: v.maturity_current, spread: v.spread };
   }
 
-  return ((caps ?? []) as {
+  const capRows = (caps ?? []) as {
     node_id: string;
     level: number;
     parent_id: string | null;
     criticality: number;
     maturity_required: number;
-  }[]).map((c) => {
+  }[];
+
+  // A level-1 domain doesn't carry its own consultant score — its current
+  // maturity is the average of its level-2 children's, so it can never drift
+  // from the sub-capabilities it's meant to summarise.
+  const childCurrentsByParent = new Map<string, number[]>();
+  for (const c of capRows) {
+    if (c.level !== 2 || !c.parent_id) continue;
     const v = vById[c.node_id];
     const cur = v?.maturity_current != null ? Number(v.maturity_current) : 0;
+    const list = childCurrentsByParent.get(c.parent_id) ?? [];
+    list.push(cur);
+    childCurrentsByParent.set(c.parent_id, list);
+  }
+
+  return capRows.map((c) => {
+    const children = c.level === 1 ? childCurrentsByParent.get(c.node_id) : undefined;
+    let cur: number;
+    if (children && children.length > 0) {
+      cur = children.reduce((sum, n) => sum + n, 0) / children.length;
+    } else {
+      const v = vById[c.node_id];
+      cur = v?.maturity_current != null ? Number(v.maturity_current) : 0;
+    }
     const req = c.maturity_required;
     const crit = c.criticality;
     const gap = Math.max(req - cur, 0);
+    const v = vById[c.node_id];
     const spread = v?.spread != null ? Number(v.spread) : 0;
     return {
       nodeId: c.node_id,

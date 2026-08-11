@@ -138,7 +138,9 @@ const RAMP = [
   { l: 74, c: 0.15, h: 108 },
   { l: 78, c: 0.15, h: 85 },
   { l: 70, c: 0.18, h: 50 },
-  { l: 58, c: 0.19, h: 25 },
+  // Severe (gap >= 4, the worst attainable on the 1-5 maturity scale): a
+  // clearly red stop, not a continuation of the amber/orange run above it.
+  { l: 50, c: 0.24, h: 20 },
 ];
 
 function rampAt(t: number): { hex: string; l: number } {
@@ -177,21 +179,45 @@ function esc(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-function wrap(label: string, max = 24): string[] {
-  if (label.length <= max) return [label];
+// Rough per-character advance widths (em multiples of font size) for bold
+// Arial/Helvetica — good enough to decide wrap points without a canvas. A
+// flat character-count threshold isn't: "Leadership & Governance" (23 chars)
+// and "Financial Management" (21 chars) render at very different pixel
+// widths because of how wide '&', 'M' and capitals run versus 'i', 'l', 't'.
+const NARROW_CHARS = new Set("iIljtf.,'".split(""));
+const WIDE_CHARS = new Set("WMmw&@%GOQ".split(""));
+
+function charWidthEm(ch: string): number {
+  if (ch === " ") return 0.28;
+  if (NARROW_CHARS.has(ch)) return 0.32;
+  if (WIDE_CHARS.has(ch)) return 0.88;
+  return 0.58;
+}
+
+function textWidthPx(s: string, fontSizePx: number): number {
+  let w = 0;
+  for (const ch of s) w += charWidthEm(ch);
+  return w * fontSizePx;
+}
+
+// Wraps to at most 2 lines that fit within maxWidthPx, so the name never
+// runs under the gap badge in the card's top-right corner.
+function wrap(label: string, maxWidthPx: number, fontSizePx = 13.5): string[] {
+  if (textWidthPx(label, fontSizePx) <= maxWidthPx) return [label];
   const words = label.split(" ");
   const lines: string[] = [];
   let cur = "";
   for (const w of words) {
-    if ((cur + " " + w).trim().length > max && cur) {
-      lines.push(cur.trim());
+    const candidate = cur ? `${cur} ${w}` : w;
+    if (cur && textWidthPx(candidate, fontSizePx) > maxWidthPx) {
+      lines.push(cur);
       cur = w;
+      if (lines.length === 2) break;
     } else {
-      cur = (cur + " " + w).trim();
+      cur = candidate;
     }
-    if (lines.length === 1 && cur.length > max) break;
   }
-  if (cur) lines.push(cur.trim());
+  if (lines.length < 2 && cur) lines.push(cur);
   return lines.slice(0, 2);
 }
 
@@ -325,7 +351,7 @@ export function heatmapSvg(vm: CapabilityHeatmap): string {
   for (const c of L.cells) {
     parts.push(`<rect x="${c.x}" y="${c.y}" width="${c.w}" height="${c.h}" rx="10" fill="#${c.fill}"/>`);
 
-    const lines = wrap(c.label);
+    const lines = wrap(c.label, c.nameBoxW);
     lines.forEach((ln, i) => {
       parts.push(
         `<text x="${c.x + PADX}" y="${c.y + PADY + 6 + i * 15}" width="${c.nameBoxW}" font-size="13.5" font-weight="bold" fill="#${c.textColor}">${esc(ln)}</text>`,

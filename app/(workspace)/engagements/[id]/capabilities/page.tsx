@@ -34,7 +34,7 @@ export default async function CapabilitiesPage({ params }: { params: Promise<{ i
     <div className="space-y-8">
       {cells.length > 0 && (
         <section className="rounded-lg border border-neutral-200 bg-white p-5">
-          <h2 className="mb-3 text-sm font-semibold text-neutral-700">Business capability heatmap · level 2, coloured by gap</h2>
+          <h2 className="mb-3 text-sm font-semibold text-neutral-700">Business Capability Heatmap</h2>
           <div className="w-full max-w-3xl" dangerouslySetInnerHTML={{ __html: svg }} />
           <p className="mt-2 text-xs text-neutral-400">Same layout model as the deck heatmap — identical geometry and colour.</p>
         </section>
@@ -73,7 +73,13 @@ export default async function CapabilitiesPage({ params }: { params: Promise<{ i
                   <td className="px-3 py-2 text-neutral-600">{c.criticality}</td>
                   <td className="px-3 py-2 text-neutral-600">{c.maturityRequired}</td>
                   <td className="px-3 py-2">
-                    <MaturityControl engagementId={id} capabilityId={c.nodeId} value={Math.round(c.maturityCurrent)} />
+                    {c.level === 1 ? (
+                      <span className="text-neutral-500" title="Average of this domain's capabilities — not directly editable">
+                        {c.maturityCurrent.toFixed(1)} avg
+                      </span>
+                    ) : (
+                      <MaturityControl engagementId={id} capabilityId={c.nodeId} value={Math.round(c.maturityCurrent)} />
+                    )}
                   </td>
                   <td className="px-3 py-2">
                     <span className={c.gap > 0 ? "font-medium text-red-700" : "text-neutral-400"}>

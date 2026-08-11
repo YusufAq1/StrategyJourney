@@ -130,7 +130,9 @@ const addCapabilitySchema = z
     parentId: z.string().uuid().optional().or(z.literal("")),
     criticality: z.coerce.number().int().min(1).max(5),
     maturityRequired: z.coerce.number().int().min(1).max(5),
-    current: z.coerce.number().int().min(1).max(5),
+    // Omitted for a level-1 domain — its current maturity is derived from its
+    // level-2 children (lib/graph/reads.ts), never scored directly.
+    current: z.coerce.number().int().min(1).max(5).optional(),
   })
   .refine((d) => d.level === 1 || (d.parentId && d.parentId.length > 0), {
     message: "A level-2 capability needs a parent domain.",
@@ -152,7 +154,7 @@ export async function addCapabilityAction(_prev: FormState, formData: FormData):
     p_parent_id: parsed.data.level === 2 ? parsed.data.parentId : null,
     p_criticality: parsed.data.criticality,
     p_maturity_required: parsed.data.maturityRequired,
-    p_current: parsed.data.current,
+    p_current: parsed.data.current ?? 1,
     p_created_by: CURRENT_USER_ID,
   });
   if (error) return { error: error.message };
