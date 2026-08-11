@@ -40,7 +40,7 @@ export function DeleteClientButton({ engagementId, orgName }: { engagementId: st
             className="w-full max-w-sm rounded-lg bg-white p-5 shadow-lg"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 className="text-sm font-semibold text-[#13294B]">Delete {orgName}?</h2>
+            <h2 className="text-sm font-semibold text-[#171258]">Delete {orgName}?</h2>
             <p className="mt-2 text-xs text-neutral-600">
               This permanently deletes every signal, insight, capability, SWOT item, option, choice, and decision log
               for this client. This cannot be undone.
@@ -56,7 +56,7 @@ export function DeleteClientButton({ engagementId, orgName }: { engagementId: st
                 value={confirmText}
                 onChange={(e) => setConfirmText(e.target.value)}
                 autoFocus
-                className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm focus:border-[#1B4F91] focus:outline-none"
+                className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm focus:border-[#6F40F1] focus:outline-none"
               />
               {state?.error && <p className="mt-2 text-xs text-red-700">{state.error}</p>}
               <div className="mt-4 flex justify-end gap-2">

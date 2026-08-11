@@ -27,7 +27,7 @@ export default async function SignalsPage({ params }: { params: Promise<{ id: st
           {signals.map((s) => (
             <li key={s.id} className="rounded-lg border border-neutral-200 bg-white p-4">
               <div className="flex items-start justify-between gap-3">
-                <Link href={`/engagements/${id}/nodes/${s.id}`} className="text-sm font-medium text-[#13294B] hover:underline">
+                <Link href={`/engagements/${id}/nodes/${s.id}`} className="text-sm font-medium text-[#171258] hover:underline">
                   {s.label}
                 </Link>
                 <div className="flex shrink-0 items-start gap-2">

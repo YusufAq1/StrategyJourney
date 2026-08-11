@@ -11,7 +11,7 @@ export function RunCoherenceButton({ engagementId, hasRun }: { engagementId: str
       <button
         type="submit"
         disabled={pending}
-        className="rounded-md bg-[#13294B] px-4 py-2 text-sm font-medium text-white hover:bg-[#1B4F91] disabled:opacity-50"
+        className="rounded-md bg-[#171258] px-4 py-2 text-sm font-medium text-white hover:bg-[#6F40F1] disabled:opacity-50"
       >
         {pending ? "Running checks…" : hasRun ? "Re-run checks" : "Run coherence checks"}
       </button>

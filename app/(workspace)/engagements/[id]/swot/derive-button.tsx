@@ -46,7 +46,7 @@ export function DeriveButton({ engagementId, hasItems }: { engagementId: string;
       <button
         type="submit"
         disabled={busy}
-        className="rounded-md bg-[#13294B] px-4 py-2 text-sm font-medium text-white hover:bg-[#1B4F91] disabled:opacity-50"
+        className="rounded-md bg-[#171258] px-4 py-2 text-sm font-medium text-white hover:bg-[#6F40F1] disabled:opacity-50"
       >
         {busy ? "Deriving with Sonnet 5…" : hasItems ? "Re-derive SWOT" : "Derive SWOT"}
       </button>

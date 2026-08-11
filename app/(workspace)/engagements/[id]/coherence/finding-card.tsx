@@ -39,7 +39,7 @@ export function FindingCard({ engagementId, finding }: { engagementId: string; f
           <input type="hidden" name="findingId" value={finding.id} />
           <textarea name="note" required rows={2} placeholder="Why is this acceptable? (recorded as a decision-log entry)" className="w-full rounded border border-neutral-300 px-2 py-1 text-xs" />
           <div className="flex items-center gap-2">
-            <button disabled={pending} className="rounded bg-[#13294B] px-2 py-1 text-xs text-white disabled:opacity-50">
+            <button disabled={pending} className="rounded bg-[#171258] px-2 py-1 text-xs text-white disabled:opacity-50">
               {pending ? "…" : "Accept + log decision"}
             </button>
             <button type="button" onClick={() => setOpen(false)} className="text-xs text-neutral-500">cancel</button>

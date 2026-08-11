@@ -33,7 +33,7 @@ export default async function DeckPage({ params }: { params: Promise<{ id: strin
         <a
           href={`/api/engagements/${id}/deck/render`}
           download
-          className="shrink-0 rounded-md bg-[#13294B] px-4 py-2 text-sm font-medium text-white hover:bg-[#1B4F91]"
+          className="shrink-0 rounded-md bg-[#171258] px-4 py-2 text-sm font-medium text-white hover:bg-[#6F40F1]"
         >
           Generate &amp; download deck
         </a>
@@ -53,7 +53,7 @@ export default async function DeckPage({ params }: { params: Promise<{ id: strin
             {report.map((r) => (
               <tr key={r.ordinal} className="border-b border-neutral-100 last:border-0">
                 <td className="px-4 py-2 text-neutral-500">{r.ordinal}</td>
-                <td className="px-3 py-2 font-medium text-[#13294B]">{r.title}</td>
+                <td className="px-3 py-2 font-medium text-[#171258]">{r.title}</td>
                 <td className="px-3 py-2 text-xs text-neutral-500">{r.binding ?? "—"}</td>
                 <td className="px-3 py-2 text-xs">
                   <span className={r.unbacked ? "text-amber-700" : r.status.startsWith("error") ? "text-red-700" : "text-emerald-700"}>{r.status}</span>

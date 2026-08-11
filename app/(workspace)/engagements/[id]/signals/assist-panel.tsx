@@ -43,7 +43,7 @@ export function AssistPanel({ engagementId }: { engagementId: string }) {
     return (
       <button
         onClick={() => setOpen(true)}
-        className="w-full rounded-md border border-dashed border-[#1B4F91] bg-[#1B4F91]/5 px-3 py-2 text-sm font-medium text-[#1B4F91] hover:bg-[#1B4F91]/10"
+        className="w-full rounded-md border border-dashed border-[#6F40F1] bg-[#6F40F1]/5 px-3 py-2 text-sm font-medium text-[#6F40F1] hover:bg-[#6F40F1]/10"
       >
         ✨ Assist: extract signals from a source
       </button>
@@ -54,9 +54,9 @@ export function AssistPanel({ engagementId }: { engagementId: string }) {
   const runId = state && "proposals" in state ? state.runId : null;
 
   return (
-    <div className="space-y-3 rounded-lg border border-[#1B4F91]/30 bg-[#1B4F91]/5 p-4">
+    <div className="space-y-3 rounded-lg border border-[#6F40F1]/30 bg-[#6F40F1]/5 p-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-[#13294B]">✨ Extract signals from a source</h3>
+        <h3 className="text-sm font-semibold text-[#171258]">✨ Extract signals from a source</h3>
         <button onClick={() => setOpen(false)} className="text-xs text-neutral-500 hover:underline">close</button>
       </div>
       <p className="text-xs text-neutral-500">
@@ -96,7 +96,7 @@ export function AssistPanel({ engagementId }: { engagementId: string }) {
           onChange={(e) => {
             if (e.target.files?.length) e.currentTarget.form?.requestSubmit();
           }}
-          className="flex-1 text-xs text-neutral-600 file:mr-2 file:rounded file:border-0 file:bg-[#1B4F91]/10 file:px-2 file:py-1 file:text-xs file:font-medium file:text-[#1B4F91]"
+          className="flex-1 text-xs text-neutral-600 file:mr-2 file:rounded file:border-0 file:bg-[#6F40F1]/10 file:px-2 file:py-1 file:text-xs file:font-medium file:text-[#6F40F1]"
         />
         {filePending && <span className="text-xs text-neutral-500">Reading file…</span>}
       </form>
@@ -120,7 +120,7 @@ export function AssistPanel({ engagementId }: { engagementId: string }) {
             setUploadedFilename(null);
           }}
         />
-        <button type="submit" disabled={pending} className="rounded-md bg-[#13294B] px-4 py-2 text-sm font-medium text-white hover:bg-[#1B4F91] disabled:opacity-50">
+        <button type="submit" disabled={pending} className="rounded-md bg-[#171258] px-4 py-2 text-sm font-medium text-white hover:bg-[#6F40F1] disabled:opacity-50">
           {pending ? "Reading…" : "Extract signals"}
         </button>
       </form>
@@ -190,7 +190,7 @@ function ProposalCard({
       {state?.error && <p className="mt-2 text-xs text-red-700">{state.error}</p>}
 
       <div className="mt-2 flex items-center gap-2">
-        <button type="submit" disabled={pending} className="rounded bg-[#13294B] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#1B4F91] disabled:opacity-50">
+        <button type="submit" disabled={pending} className="rounded bg-[#171258] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#6F40F1] disabled:opacity-50">
           {pending ? "Saving…" : "Accept"}
         </button>
         <button type="button" onClick={() => setDismissed(true)} className="rounded px-2 py-1.5 text-xs text-neutral-500 hover:bg-neutral-100">

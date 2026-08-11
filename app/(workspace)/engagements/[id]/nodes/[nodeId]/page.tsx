@@ -6,8 +6,8 @@ import { getProvenance } from "@/lib/graph/provenance";
 import { dimensionLabel } from "@/lib/constants";
 
 const typeColor: Record<string, string> = {
-  signal: "bg-[#1B4F91] text-white",
-  insight: "bg-[#13294B] text-white",
+  signal: "bg-[#6F40F1] text-white",
+  insight: "bg-[#171258] text-white",
   capability: "bg-emerald-700 text-white",
   swot_item: "bg-amber-600 text-white",
   option: "bg-violet-700 text-white",
@@ -62,12 +62,12 @@ export default async function NodePage({ params }: { params: Promise<{ id: strin
             {node.staleSince ? " · stale" : ""}
           </span>
         </div>
-        <h2 className="mt-2 text-lg font-medium text-[#13294B]">{node.label}</h2>
+        <h2 className="mt-2 text-lg font-medium text-[#171258]">{node.label}</h2>
         {root && (root.sourceUri || root.sourceRef) && (
           <div className="mt-2 text-sm text-neutral-600">
             Source:{" "}
             {root.sourceUri ? (
-              <a href={root.sourceUri} target="_blank" rel="noreferrer" className="text-[#1B4F91] underline">
+              <a href={root.sourceUri} target="_blank" rel="noreferrer" className="text-[#6F40F1] underline">
                 {host(root.sourceUri)}
               </a>
             ) : (
@@ -103,7 +103,7 @@ export default async function NodePage({ params }: { params: Promise<{ id: strin
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-[10px] text-neutral-400">via {r.via}</span>
                   <TypeBadge t={r.nodeType} />
-                  <Link href={`/engagements/${id}/nodes/${r.nodeId}`} className="text-sm text-[#13294B] hover:underline">
+                  <Link href={`/engagements/${id}/nodes/${r.nodeId}`} className="text-sm text-[#171258] hover:underline">
                     {r.label}
                   </Link>
                 </div>

@@ -42,7 +42,7 @@ export default async function OptionsPage({ params }: { params: Promise<{ id: st
           {view.options.map((o) => (
             <section key={o.nodeId} className={`rounded-lg border bg-white p-4 ${o.selected ? "border-[#C0A15B] ring-1 ring-[#C0A15B]" : "border-neutral-200"}`}>
               <div className="flex items-start justify-between gap-2">
-                <h3 className="text-sm font-semibold text-[#13294B]">{o.label}</h3>
+                <h3 className="text-sm font-semibold text-[#171258]">{o.label}</h3>
                 <div className="flex shrink-0 items-center gap-1">
                   {o.requiresNewCapability && (
                     <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800">needs new capability</span>

@@ -22,7 +22,7 @@ export default async function OverviewPage({ params }: { params: Promise<{ id: s
             href={c.href}
             className="rounded-lg border border-neutral-200 bg-white p-5 transition hover:border-neutral-400"
           >
-            <div className="text-3xl font-semibold text-[#13294B]">{c.n}</div>
+            <div className="text-3xl font-semibold text-[#171258]">{c.n}</div>
             <div className="text-sm text-neutral-500">{c.label}</div>
           </Link>
         ))}

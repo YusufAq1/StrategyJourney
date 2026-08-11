@@ -1,3 +1,13 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  * {
+    scrollbar-color: theme("colors.neutral.300") transparent;
+  }
+  ::selection {
+    background: theme("colors.brand.200");
+    color: theme("colors.brand.900");
+  }
+}

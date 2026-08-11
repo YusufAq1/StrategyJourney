@@ -14,7 +14,7 @@ export function SuggestInsights({ engagementId }: { engagementId: string }) {
     return (
       <button
         onClick={() => setOpen(true)}
-        className="w-full rounded-md border border-dashed border-[#1B4F91] bg-[#1B4F91]/5 px-3 py-2 text-sm font-medium text-[#1B4F91] hover:bg-[#1B4F91]/10"
+        className="w-full rounded-md border border-dashed border-[#6F40F1] bg-[#6F40F1]/5 px-3 py-2 text-sm font-medium text-[#6F40F1] hover:bg-[#6F40F1]/10"
       >
         ✨ Suggest insights from my signals
       </button>
@@ -26,9 +26,9 @@ export function SuggestInsights({ engagementId }: { engagementId: string }) {
   const runId = state && "proposals" in state ? state.runId : null;
 
   return (
-    <div className="space-y-3 rounded-lg border border-[#1B4F91]/30 bg-[#1B4F91]/5 p-4">
+    <div className="space-y-3 rounded-lg border border-[#6F40F1]/30 bg-[#6F40F1]/5 p-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-[#13294B]">✨ Suggest insights</h3>
+        <h3 className="text-sm font-semibold text-[#171258]">✨ Suggest insights</h3>
         <button onClick={() => setOpen(false)} className="text-xs text-neutral-500 hover:underline">close</button>
       </div>
       <p className="text-xs text-neutral-500">
@@ -37,7 +37,7 @@ export function SuggestInsights({ engagementId }: { engagementId: string }) {
 
       <form action={action}>
         <input type="hidden" name="engagementId" value={engagementId} />
-        <button type="submit" disabled={pending} className="rounded-md bg-[#13294B] px-4 py-2 text-sm font-medium text-white hover:bg-[#1B4F91] disabled:opacity-50">
+        <button type="submit" disabled={pending} className="rounded-md bg-[#171258] px-4 py-2 text-sm font-medium text-white hover:bg-[#6F40F1] disabled:opacity-50">
           {pending ? "Thinking…" : "Suggest insights"}
         </button>
       </form>
@@ -107,7 +107,7 @@ function ProposalCard({
       {state?.error && <p className="mt-2 text-xs text-red-700">{state.error}</p>}
 
       <div className="mt-2 flex items-center gap-2">
-        <button type="submit" disabled={pending} className="rounded bg-[#13294B] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#1B4F91] disabled:opacity-50">
+        <button type="submit" disabled={pending} className="rounded bg-[#171258] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#6F40F1] disabled:opacity-50">
           {pending ? "Saving…" : "Accept"}
         </button>
         <button type="button" onClick={() => setDismissed(true)} className="rounded px-2 py-1.5 text-xs text-neutral-500 hover:bg-neutral-100">

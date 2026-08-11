@@ -67,7 +67,7 @@ export default async function CapabilitiesPage({ params }: { params: Promise<{ i
             <tbody>
               {ordered.map((c) => (
                 <tr key={c.nodeId} className="border-b border-neutral-100 last:border-0">
-                  <td className={`px-4 py-2 ${c.level === 1 ? "font-semibold text-[#13294B]" : "pl-8 text-neutral-700"}`}>
+                  <td className={`px-4 py-2 ${c.level === 1 ? "font-semibold text-[#171258]" : "pl-8 text-neutral-700"}`}>
                     {c.label}
                   </td>
                   <td className="px-3 py-2 text-neutral-600">{c.criticality}</td>

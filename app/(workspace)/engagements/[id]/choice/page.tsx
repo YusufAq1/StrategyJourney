@@ -23,7 +23,7 @@ export default async function ChoicePage({ params }: { params: Promise<{ id: str
               decided by {choice.decidedBy} · {format(new Date(choice.decidedAt), "d LLL yyyy")} · human-made
             </span>
           </div>
-          <h3 className="mt-2 text-lg font-medium text-[#13294B]">
+          <h3 className="mt-2 text-lg font-medium text-[#171258]">
             <Link href={`/engagements/${id}/nodes/${choice.nodeId}`} className="hover:underline">{choice.statement}</Link>
           </h3>
           <p className="mt-2 text-sm text-neutral-700"><span className="font-medium text-neutral-500">Rationale: </span>{choice.rationale}</p>

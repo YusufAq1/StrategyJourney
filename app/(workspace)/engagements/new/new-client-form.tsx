@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import { createEngagementAction, type FormState } from "../actions";
 
-const field = "w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm outline-none focus:border-neutral-500";
+const field = "w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100";
 const label = "block text-xs font-medium text-neutral-600 mb-1";
 
 export function NewClientForm() {
@@ -54,7 +54,7 @@ export function NewClientForm() {
         <button
           type="submit"
           disabled={pending}
-          className="rounded-md bg-[#13294B] px-4 py-2 text-sm font-medium text-white hover:bg-[#1B4F91] disabled:opacity-50"
+          className="rounded-md bg-[#171258] px-4 py-2 text-sm font-medium text-white hover:bg-[#6F40F1] disabled:opacity-50"
         >
           {pending ? "Creating…" : "Create client & start"}
         </button>

@@ -56,7 +56,7 @@ export default async function SwotPage({ params }: { params: Promise<{ id: strin
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {QUADS.map((q) => (
             <section key={q.key} className={`rounded-lg border ${q.tone} bg-white p-4`}>
-              <h3 className="mb-2 text-sm font-semibold text-[#13294B]">
+              <h3 className="mb-2 text-sm font-semibold text-[#171258]">
                 {q.label} · {view.quadrants[q.key].length}
               </h3>
               <ul className="space-y-2">
