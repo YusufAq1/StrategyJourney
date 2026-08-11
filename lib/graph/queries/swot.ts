@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { register, type GraphQuery, type QueryArgs, type QueryContext } from "./registry";
-import type { SwotView, SwotItem, SwotEvidence, SwotQuadrant } from "./types";
+import type { SwotView, SwotItem, EvidenceRef, SwotQuadrant } from "./types";
 
 // PostgREST returns a one-to-one embed (e.g. swot_item on its node PK) as a
 // single object, but a one-to-many embed (signal_source) as an array. Normalise.
@@ -47,7 +47,7 @@ export const swotDerived: GraphQuery<SwotView> = {
       }
     }
 
-    const evNodes: Record<string, SwotEvidence> = {};
+    const evNodes: Record<string, EvidenceRef> = {};
     if (evidenceIds.size > 0) {
       const { data: ev, error: e3 } = await db
         .from("node")

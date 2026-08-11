@@ -51,21 +51,25 @@ export type CapabilityGaps = {
   totalBelowRequired: number;
 };
 
-// §3.5 — swot.derived()
-export type SwotQuadrant = "strength" | "weakness" | "opportunity" | "threat";
-export type SwotEvidence = {
+// Shared evidence-node shape — anything a derived artifact (SWOT item, option)
+// can point a derives_from edge at. Used wherever an evidence list needs a
+// real label/type/source instead of a bare node id.
+export type EvidenceRef = {
   nodeId: string;
-  type: "signal" | "capability";
+  type: "signal" | "capability" | "swot_item";
   label: string;
   sourceRef: string | null;
   publishedAt: string | null;
 };
+
+// §3.5 — swot.derived()
+export type SwotQuadrant = "strength" | "weakness" | "opportunity" | "threat";
 export type SwotItem = {
   nodeId: string;
   statement: string;
   rank: number | null;
   rationale: string | null;
-  evidence: SwotEvidence[];
+  evidence: EvidenceRef[];
 };
 export type SwotView = {
   quadrants: Record<SwotQuadrant, SwotItem[]>;
@@ -84,7 +88,7 @@ export type OptionCard = {
   strongestArgumentAgainst: string;
   requiresNewCapability: boolean;
   openQuestions: string | null;
-  evidenceNodeIds: string[];
+  evidence: EvidenceRef[];
   selected: boolean;
 };
 export type OptionsView = { options: OptionCard[] };

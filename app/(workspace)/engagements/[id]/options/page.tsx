@@ -3,6 +3,7 @@ import { createHumanClient } from "@/lib/db/human";
 import { resolveBinding } from "@/lib/graph/queries";
 import type { OptionsView } from "@/lib/graph/queries/types";
 import { GenerateOptionsButton } from "./generate-button";
+import { EvidencePopover } from "./evidence-popover";
 import { nodeHref } from "@/lib/nav";
 
 const VECTOR_LABEL: Record<string, string> = {
@@ -62,15 +63,7 @@ export default async function OptionsPage({ params }: { params: Promise<{ id: st
                 <p className="mt-1 text-xs text-neutral-500"><span className="font-medium">Open questions: </span>{o.openQuestions}</p>
               )}
 
-              {o.evidenceNodeIds.length > 0 && (
-                <div className="mt-2 flex flex-wrap gap-1">
-                  {o.evidenceNodeIds.map((eid) => (
-                    <Link key={eid} href={nodeHref(id, eid, "options")} className="rounded bg-neutral-100 px-1.5 py-0.5 text-[10px] text-neutral-600 hover:bg-neutral-200">
-                      evidence
-                    </Link>
-                  ))}
-                </div>
-              )}
+              <EvidencePopover engagementId={id} evidence={o.evidence} />
             </section>
           ))}
         </div>
