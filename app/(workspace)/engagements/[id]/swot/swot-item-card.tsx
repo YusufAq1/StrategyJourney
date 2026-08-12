@@ -5,6 +5,7 @@ import Link from "next/link";
 import { deleteSwotItemAction, type FormState } from "../actions";
 import type { SwotItem } from "@/lib/graph/queries/types";
 import { nodeHref } from "@/lib/nav";
+import { EvidencePopover } from "../options/evidence-popover";
 
 export function SwotItemCard({ engagementId, item }: { engagementId: string; item: SwotItem }) {
   const [confirming, setConfirming] = useState(false);
@@ -22,18 +23,7 @@ export function SwotItemCard({ engagementId, item }: { engagementId: string; ite
       </div>
 
       {item.evidence.length > 0 ? (
-        <div className="mt-2 flex flex-wrap gap-1">
-          {item.evidence.map((e) => (
-            <Link
-              key={e.nodeId}
-              href={nodeHref(engagementId, e.nodeId, "swot")}
-              title={e.sourceRef ?? undefined}
-              className="rounded bg-neutral-100 px-1.5 py-0.5 text-[10px] text-neutral-600 hover:bg-neutral-200"
-            >
-              {e.type === "signal" ? "◆" : "▲"} {e.label.length > 40 ? e.label.slice(0, 40) + "…" : e.label}
-            </Link>
-          ))}
-        </div>
+        <EvidencePopover engagementId={engagementId} evidence={item.evidence} from="swot" />
       ) : (
         <div className="mt-2">
           <span className="rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 ring-1 ring-amber-200">

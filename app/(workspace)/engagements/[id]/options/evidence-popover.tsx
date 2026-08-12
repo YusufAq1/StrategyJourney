@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import type { EvidenceRef } from "@/lib/graph/queries/types";
-import { nodeHref } from "@/lib/nav";
+import { nodeHref, type NodeTab } from "@/lib/nav";
 
 const TYPE_GLYPH: Record<EvidenceRef["type"], string> = {
   signal: "◆",
@@ -16,7 +16,15 @@ const TYPE_LABEL: Record<EvidenceRef["type"], string> = {
   swot_item: "SWOT item",
 };
 
-export function EvidencePopover({ engagementId, evidence }: { engagementId: string; evidence: EvidenceRef[] }) {
+export function EvidencePopover({
+  engagementId,
+  evidence,
+  from = "options",
+}: {
+  engagementId: string;
+  evidence: EvidenceRef[];
+  from?: NodeTab;
+}) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -55,7 +63,7 @@ export function EvidencePopover({ engagementId, evidence }: { engagementId: stri
             {evidence.map((e) => (
               <li key={e.nodeId}>
                 <Link
-                  href={nodeHref(engagementId, e.nodeId, "options")}
+                  href={nodeHref(engagementId, e.nodeId, from)}
                   className="block px-3 py-2 hover:bg-neutral-50"
                   onClick={() => setOpen(false)}
                 >
