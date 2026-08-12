@@ -74,7 +74,7 @@ export function InsightForm({ engagementId, signals }: { engagementId: string; s
       <button
         type="submit"
         disabled={pending || checked.size === 0}
-        className="rounded-md bg-[#171258] px-4 py-2 text-sm font-medium text-white hover:bg-[#6F40F1] disabled:opacity-50"
+        className="w-full rounded-md bg-[#171258] px-4 py-3 text-[13.5px] font-bold text-white hover:bg-[#6F40F1] disabled:opacity-50"
       >
         {pending ? "Saving…" : "Add insight"}
       </button>

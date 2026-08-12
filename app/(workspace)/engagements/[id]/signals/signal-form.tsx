@@ -10,6 +10,7 @@ const label = "block text-xs font-medium text-neutral-600 mb-1";
 export function SignalForm({ engagementId }: { engagementId: string }) {
   const [state, action, pending] = useActionState<FormState, FormData>(createSignalAction, null);
   const [kind, setKind] = useState<string>("web");
+  const [credibility, setCredibility] = useState(3);
 
   return (
     <form action={action} className="space-y-4">
@@ -59,12 +60,21 @@ export function SignalForm({ engagementId }: { engagementId: string }) {
           <input id="publishedAt" name="publishedAt" type="date" required className={field} />
         </div>
         <div>
-          <label className={label} htmlFor="credibility">Credibility (1–5)</label>
-          <select id="credibility" name="credibility" defaultValue="3" className={field}>
+          <label className={label}>Credibility</label>
+          <div className="flex gap-1.5 pt-1.5">
             {[1, 2, 3, 4, 5].map((n) => (
-              <option key={n} value={n}>{n}</option>
+              <button
+                key={n}
+                type="button"
+                onClick={() => setCredibility(n)}
+                aria-label={`Credibility ${n}`}
+                className={`h-[19px] w-[19px] rounded-full border-[1.5px] ${
+                  n <= credibility ? "border-brand-500 bg-brand-500" : "border-neutral-300 bg-transparent"
+                }`}
+              />
             ))}
-          </select>
+          </div>
+          <input type="hidden" name="credibility" value={credibility} />
         </div>
       </div>
 
@@ -80,7 +90,7 @@ export function SignalForm({ engagementId }: { engagementId: string }) {
       <button
         type="submit"
         disabled={pending}
-        className="rounded-md bg-[#171258] px-4 py-2 text-sm font-medium text-white hover:bg-[#6F40F1] disabled:opacity-50"
+        className="w-full rounded-md bg-[#171258] px-4 py-3 text-[13.5px] font-bold text-white hover:bg-[#6F40F1] disabled:opacity-50"
       >
         {pending ? "Saving…" : "Add signal"}
       </button>

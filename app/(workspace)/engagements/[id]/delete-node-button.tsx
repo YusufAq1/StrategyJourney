@@ -22,11 +22,13 @@ export function DeleteNodeButton({
   engagementId,
   nodeId,
   confirmLabel,
+  variant = "text",
 }: {
   kind: keyof typeof ACTIONS;
   engagementId: string;
   nodeId: string;
   confirmLabel?: string;
+  variant?: "text" | "icon";
 }) {
   const [state, action, pending] = useActionState<FormState, FormData>(ACTIONS[kind], null);
   const [confirming, setConfirming] = useState(false);
@@ -37,10 +39,14 @@ export function DeleteNodeButton({
         <button
           type="button"
           onClick={() => setConfirming(true)}
-          className="rounded px-2 py-1 text-xs text-neutral-400 hover:bg-red-50 hover:text-red-700"
+          className={
+            variant === "icon"
+              ? "flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-base leading-none text-neutral-300 hover:bg-neutral-50 hover:text-neutral-600"
+              : "rounded px-2 py-1 text-xs text-neutral-400 hover:bg-red-50 hover:text-red-700"
+          }
           aria-label="Delete"
         >
-          Delete
+          {variant === "icon" ? "⋯" : "Delete"}
         </button>
         {state?.error && <span className="max-w-xs text-right text-[11px] text-red-700">{state.error}</span>}
       </div>

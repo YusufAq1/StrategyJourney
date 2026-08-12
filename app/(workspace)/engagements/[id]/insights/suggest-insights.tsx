@@ -7,37 +7,26 @@ import type { InsightProposal } from "@/lib/ai/assist-types";
 const field = "w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm outline-none focus:border-neutral-500";
 
 export function SuggestInsights({ engagementId }: { engagementId: string }) {
-  const [open, setOpen] = useState(false);
   const [state, action, pending] = useActionState<ProposeInsightsState, FormData>(proposeInsightsAction, null);
-
-  if (!open) {
-    return (
-      <button
-        onClick={() => setOpen(true)}
-        className="w-full rounded-md border border-dashed border-[#6F40F1] bg-[#6F40F1]/5 px-3 py-2 text-sm font-medium text-[#6F40F1] hover:bg-[#6F40F1]/10"
-      >
-        ✨ Suggest insights from my signals
-      </button>
-    );
-  }
 
   const proposals = state && "proposals" in state ? state.proposals : [];
   const signalLabels = state && "proposals" in state ? state.signalLabels : {};
   const runId = state && "proposals" in state ? state.runId : null;
 
   return (
-    <div className="space-y-3 rounded-lg border border-[#6F40F1]/30 bg-[#6F40F1]/5 p-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-[#171258]">✨ Suggest insights</h3>
-        <button onClick={() => setOpen(false)} className="text-xs text-neutral-500 hover:underline">close</button>
-      </div>
+    <div className="space-y-3">
       <p className="text-xs text-neutral-500">
-        The AI reads your signals and drafts candidate insights, each citing the signals it rests on — <span className="font-medium">you decide</span>.
+        The AI reads your signals and drafts candidate insights, each citing the signals it rests on —{" "}
+        <span className="font-medium">you decide</span>; nothing saves until you accept it.
       </p>
 
       <form action={action}>
         <input type="hidden" name="engagementId" value={engagementId} />
-        <button type="submit" disabled={pending} className="rounded-md bg-[#171258] px-4 py-2 text-sm font-medium text-white hover:bg-[#6F40F1] disabled:opacity-50">
+        <button
+          type="submit"
+          disabled={pending}
+          className="w-full rounded-md bg-[#171258] px-4 py-3 text-[13.5px] font-bold text-white hover:bg-[#6F40F1] disabled:opacity-50"
+        >
           {pending ? "Thinking…" : "Suggest insights"}
         </button>
       </form>
